@@ -46,6 +46,8 @@ button:hover { background: #0056b3; }
 
 <script>
 // === Firebase Config ===
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
   authDomain: "email-sync-tool-96986.firebaseapp.com",
@@ -55,6 +57,11 @@ const firebaseConfig = {
   messagingSenderId: "1037617074734",
   appId: "1:1037617074734:web:769074e6da0efc030d45bf"
 };
+
+
+
+
+
 
 
 firebase.initializeApp(firebaseConfig);
@@ -89,7 +96,7 @@ function fallbackCopy(text) {
     textarea.select();
     try {
         const successful = document.execCommand('copy');
-        document.getElementById('output').textContent = successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.';
+document.getElementById('output').textContent = successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.';
     } catch (err) {
         document.getElementById('output').textContent = '⚠️ Lỗi khi copy.';
     }
@@ -164,34 +171,3 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
 
 // Lấy & Copy 1 email + xóa
 document.getElementById('copyButton').addEventListener('click', () => {
-    if (emailList.length === 0) {
-        document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
-        return;
-    }
-    const randomIndex = Math.floor(Math.random() * emailList.length);
-    const fullEmail = emailList[randomIndex];
-
-   // Tách lấy phần trước dấu "|"
-    const email = fullEmail.split('|')[0];
-
-    // Copy phần email đã tách
-    copyText(email);
-
-    // Xóa khỏi danh sách
-    emailRef.transaction(currentList => {
-        if (!currentList) return null;
-        currentList.splice(randomIndex, 1);
-        return currentList;
-    }, (error, committed, snapshot) => {
-        if (error) {
-            document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
-        } else if (committed) {
-            document.getElementById('emailOutput').value = email; // Hiển thị email đã tách
-            emailList = snapshot.val() || [];
-            updateCount();
-        }
-    });
-});
-</script>
-</body>
-</html>
