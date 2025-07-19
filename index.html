@@ -114,15 +114,49 @@ document.getElementById('addListButton').addEventListener('click', () => {
         document.getElementById('output').textContent = '⚠️ Không có email hợp lệ.';
         return;
     }
-    emailRef.transaction(currentList => {
+        emailRef.transaction(currentList => {
         const updatedList = currentList ? currentList.slice() : [];
+        const duplicates = [];
+        const added = [];
+
         newEmails.forEach(email => {
-            if (!updatedList.includes(email)) {
+            if (updatedList.includes(email)) {
+                duplicates.push(email);
+            } else {
                 updatedList.push(email);
+                added.push(email);
             }
         });
+
+        if (added.length === 0) return; // Không thêm gì cả nếu tất cả đều trùng
+
+        // Lưu lại thông báo để dùng sau transaction
+        document._addedEmails = added;
+        document._duplicateEmails = duplicates;
+
         return updatedList;
     }, (error, committed, snapshot) => {
+        const added = document._addedEmails || [];
+        const duplicates = document._duplicateEmails || [];
+
+        delete document._addedEmails;
+        delete document._duplicateEmails;
+
+        if (error) {
+            document.getElementById('output').textContent = '⚠️ Lỗi khi thêm email.';
+        } else if (!committed) {
+            document.getElementById('output').textContent = '⚠️ Không thể thêm email (có thể tất cả đều trùng).';
+        } else {
+            let msg = `✅ Đã thêm ${added.length} email.`;
+            if (duplicates.length > 0) {
+                msg += ` ⚠️ Bị trùng: ${duplicates.length} email không được thêm.`;
+            }
+            document.getElementById('output').textContent = msg;
+            document.getElementById('emailListInput').value = '';
+            updateCount();
+        }
+    });
+
         if (error) {
             document.getElementById('output').textContent = '⚠️ Lỗi khi thêm email.';
         } else if (!committed) {
