@@ -184,32 +184,66 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
     copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa
-document.getElementById('copyButton').addEventListener('click', () => {
+
+
+
+
+
+
+
+document.getElementById('copyButton').addEventListener('click', async () => {
+    const output = document.getElementById('output');
+    const emailField = document.getElementById('emailOutput');
+
     if (emailList.length === 0) {
-        document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
+        output.textContent = '✅ Danh sách đã hết email.';
         return;
     }
+
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const fullEmail = emailList[randomIndex];
     const email = fullEmail.split('|')[0];
 
-    copyText(email);
+    output.textContent = `⏳ Đang chuẩn bị copy email sau 5 giây...`;
+    emailField.value = '';
 
+    // Đếm ngược 5 giây
+    for (let i = 5; i > 0; i--) {
+        output.textContent = `⏳ Copy sau ${i} giây...`;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    // Thử copy
+    const success = await tryCopy(email);
+    if (!success) {
+        output.textContent = '⚠️ Không thể copy. Hãy thử lại.';
+        return;
+    }
+
+    // Nếu copy thành công → xóa khỏi danh sách
     emailRef.transaction(currentList => {
         if (!currentList) return null;
         currentList.splice(randomIndex, 1);
         return currentList;
     }, (error, committed, snapshot) => {
         if (error) {
-            document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
+            output.textContent = '⚠️ Lỗi khi xóa email.';
         } else if (committed) {
-            document.getElementById('emailOutput').value = email;
             emailList = snapshot.val() || [];
+            emailField.value = email;
             updateCount();
+            output.textContent = `✅ Đã copy: ${email}`;
         }
     });
 });
+
+    
+
+
+    
+
+
+
 </script>
 </body>
 </html>
