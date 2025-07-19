@@ -143,35 +143,40 @@
   });
 
   // Thêm danh sách mail, loại bỏ trùng (so sánh không phân biệt hoa thường)
-  document.getElementById('addListButton').addEventListener('click', () => {
-    const input = document.getElementById('emailListInput').value.trim();
-    if (!input) {
-      document.getElementById('output').textContent = '⚠️ Vui lòng dán danh sách email.';
-      return;
+document.getElementById('copyButton').addEventListener('click', () => {
+  if (emailList.length === 0) {
+    document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
+    return;
+  }
+
+  const copyBtn = document.getElementById('copyButton');
+  copyBtn.disabled = true;
+
+  const randomIndex = Math.floor(Math.random() * emailList.length);
+  const fullEmail = emailList[randomIndex];
+  const email = fullEmail.split('|')[0];
+
+  copyText(email);
+
+  emailRef.transaction(currentList => {
+    if (!currentList) return null;
+    // Tìm index bằng giá trị email chính xác trong currentList
+    const index = currentList.findIndex(e => e === fullEmail);
+    if (index > -1) {
+      currentList.splice(index, 1);
     }
-    // Tách danh sách email, trim, lọc rỗng
-    let newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => e);
-    if (newEmails.length === 0) {
-      document.getElementById('output').textContent = '⚠️ Không có email hợp lệ.';
-      return;
+    return currentList;
+  }, (error, committed, snapshot) => {
+    copyBtn.disabled = false;
+    if (error) {
+      document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
+    } else if (committed) {
+      document.getElementById('emailOutput').value = email;
+      emailList = snapshot.val() || [];
+      updateCount();
     }
-
-    emailRef.transaction(currentList => {
-      const updatedList = currentList ? currentList.slice() : [];
-
-      const existingSet = new Set(updatedList.map(e => e.toLowerCase()));
-      const newSet = new Set();
-
-      // Lọc bỏ email trùng trong newEmails và với danh sách hiện tại
-      newEmails = newEmails.filter(email => {
-        const lower = email.toLowerCase();
-        if (existingSet.has(lower) || newSet.has(lower)) {
-          return false; // trùng lặp
-        }
-        newSet.add(lower);
-        return true;
-      });
-
+  });
+});
       // Thêm email lọc vào danh sách
       updatedList.push(...newEmails);
       return updatedList;
