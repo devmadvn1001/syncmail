@@ -1,30 +1,30 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quản lý Email Online</title>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<style>
-body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-textarea, input, button { font-size: 16px; width: 90%; max-width: 340px; margin-top: 10px; padding: 12px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-button { background: #007bff; color: white; border: none; cursor: pointer; transition: background 0.3s; }
-button:hover { background: #0056b3; }
-.input-container { display: flex; gap: 10px; align-items: center; width: 90%; max-width: 340px; margin-top: 10px; }
-#manualCopyButton { max-width: 60px; padding: 10px; }
-#deleteListButton { background: #dc3545; }
-#deleteListButton:hover { background: #a71d2a; }
-#copyButton { 
-    font-size: 20px; 
-    padding: 18px; 
-    width: 95%; 
-    max-width: 380px; 
-    margin-top: 30px; 
-    background: #28a745;
-}
-#copyButton:hover { background: #1c7c31; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Email Online</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        textarea, input, button { font-size: 16px; width: 90%; max-width: 340px; margin-top: 10px; padding: 12px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; transition: background 0.3s; }
+        button:hover { background: #0056b3; }
+        .input-container { display: flex; gap: 10px; align-items: center; width: 90%; max-width: 340px; margin-top: 10px; }
+        #manualCopyButton { max-width: 60px; padding: 10px; }
+        #deleteListButton { background: #dc3545; }
+        #deleteListButton:hover { background: #a71d2a; }
+        #copyButton { 
+            font-size: 20px; 
+            padding: 18px; 
+            width: 95%; 
+            max-width: 380px; 
+            margin-top: 30px; 
+            background: #28a745;
+        }
+        #copyButton:hover { background: #1c7c31; }
+    </style>
 </head>
 <body>
 
@@ -35,8 +35,8 @@ button:hover { background: #0056b3; }
 <button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
 
 <div class="input-container">
-<input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly>
-<button id="manualCopyButton">📋</button>
+    <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly>
+    <button id="manualCopyButton">📋</button>
 </div>
 
 <p id="count"></p>
@@ -54,7 +54,7 @@ const firebaseConfig = {
     storageBucket: "email-sync-tool-96986.firebasestorage.app",
     messagingSenderId: "1037617074734",
     appId: "1:1037617074734:web:769074e6da0efc030d45bf"
-  };
+};
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -161,35 +161,32 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
     copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa
+// Lấy & Copy 1 email + xóa với thời gian chờ 5 giây
 document.getElementById('copyButton').addEventListener('click', () => {
     if (emailList.length === 0) {
         document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
         return;
     }
-    const randomIndex = Math.floor(Math.random() * emailList.length);
-    const fullEmail = emailList[randomIndex];
 
-   // Tách lấy phần trước dấu "|"
-    const email = fullEmail.split('|')[0];
+    let countdown = 5; // Thời gian chờ 5 giây
+    const originalText = document.getElementById('copyButton').textContent;
 
-    // Copy phần email đã tách
-    copyText(email);
+    const intervalId = setInterval(() => {
+        document.getElementById('copyButton').textContent = `📋 Chờ ${countdown}s`;
+        countdown--;
+        if (countdown < 0) {
+            clearInterval(intervalId);
+            const randomIndex = Math.floor(Math.random() * emailList.length);
+            const fullEmail = emailList[randomIndex];
 
-    // Xóa khỏi danh sách
-    emailRef.transaction(currentList => {
-        if (!currentList) return null;
-        currentList.splice(randomIndex, 1);
-        return currentList;
-    }, (error, committed, snapshot) => {
-        if (error) {
-            document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
-        } else if (committed) {
-            document.getElementById('emailOutput').value = email; // Hiển thị email đã tách
-            emailList = snapshot.val() || [];
-            updateCount();
+            // Tách lấy phần trước dấu "|"
+            const email = fullEmail.split('|')[0];
+
+            // Sao chép email
+            copyText(email);
+            document.getElementById('copyButton').textContent = originalText; // Đặt lại văn bản cho nút sau khi sao chép
         }
-    });
+    }, 1000); // Thực hiện mỗi giây
 });
 </script>
 </body>
