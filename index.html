@@ -55,15 +55,6 @@ const firebaseConfig = {
   messagingSenderId: "1037617074734",
   appId: "1:1037617074734:web:769074e6da0efc030d45bf"
 };
-
-
-
-
-
-
-
-
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
@@ -176,9 +167,12 @@ document.getElementById('copyButton').addEventListener('click', () => {
         return;
     }
     const randomIndex = Math.floor(Math.random() * emailList.length);
-    const email = emailList[randomIndex];
+    const fullEmail = emailList[randomIndex];
 
-    // Copy trước
+    // Tách lấy phần trước dấu "|"
+    const email = fullEmail.split('|')[0];
+
+    // Copy phần email đã tách
     copyText(email);
 
     // Xóa khỏi danh sách
@@ -190,7 +184,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
         if (error) {
             document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
         } else if (committed) {
-            document.getElementById('emailOutput').value = email;
+            document.getElementById('emailOutput').value = email; // Hiển thị email đã tách
             emailList = snapshot.val() || [];
             updateCount();
         }
