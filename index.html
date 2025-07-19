@@ -51,7 +51,7 @@ const firebaseConfig = {
   authDomain: "email-sync-tool-96986.firebaseapp.com",
   databaseURL: "https://email-sync-tool-96986-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "email-sync-tool-96986",
-  storageBucket: "email-sync-tool-96986.appspot.com",
+  storageBucket: "email-sync-tool-96986.firebasestorage.app",
   messagingSenderId: "1037617074734",
   appId: "1:1037617074734:web:769074e6da0efc030d45bf"
 };
@@ -65,11 +65,12 @@ function updateCount() {
     document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
+// Copy ổn định trên mọi trình duyệt
 function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
             document.getElementById('output').textContent = `✅ Đã copy: ${text}`;
-        }).catch(() => {
+        }).catch(err => {
             fallbackCopy(text);
         });
     } else {
@@ -101,59 +102,44 @@ emailRef.on('value', snapshot => {
     updateCount();
 });
 
-// Thêm danh sách mail (có kiểm tra trùng)
+// Thêm danh sách mail
 document.getElementById('addListButton').addEventListener('click', () => {
     const input = document.getElementById('emailListInput').value.trim();
     if (!input) {
         document.getElementById('output').textContent = '⚠️ Vui lòng dán danh sách email.';
         return;
     }
-
     const newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => e);
     if (newEmails.length === 0) {
         document.getElementById('output').textContent = '⚠️ Không có email hợp lệ.';
         return;
     }
 
+    let duplicateEmails = [];
+
     emailRef.transaction(currentList => {
         const updatedList = currentList ? currentList.slice() : [];
-        const duplicates = [];
-        const added = [];
-
         newEmails.forEach(email => {
-            if (updatedList.includes(email)) {
-                duplicates.push(email);
-            } else {
+            if (!updatedList.includes(email)) {
                 updatedList.push(email);
-                added.push(email);
+            } else {
+                duplicateEmails.push(email);
             }
         });
-
-        if (added.length === 0) return; // không thêm gì cả nếu tất cả đều trùng
-
-        document._addedEmails = added;
-        document._duplicateEmails = duplicates;
-
         return updatedList;
     }, (error, committed, snapshot) => {
-        const added = document._addedEmails || [];
-        const duplicates = document._duplicateEmails || [];
-
-        delete document._addedEmails;
-        delete document._duplicateEmails;
-
         if (error) {
             document.getElementById('output').textContent = '⚠️ Lỗi khi thêm email.';
         } else if (!committed) {
-            document.getElementById('output').textContent = '⚠️ Tất cả email đã tồn tại, không thêm gì cả.';
+            document.getElementById('output').textContent = '⚠️ Không thể thêm email.';
         } else {
-            let msg = `✅ Đã thêm ${added.length} email.`;
-            if (duplicates.length > 0) {
-                msg += ` ⚠️ Bị trùng ${duplicates.length} email.`;
-                // Nếu muốn hiển thị danh sách email trùng thì thêm:
-                // msg += `\nEmail trùng: ${duplicates.join(', ')}`;
+            const updatedList = snapshot.val() ? snapshot.val() : [];
+            const addedCount = newEmails.length - duplicateEmails.length;
+            let message = `✅ Đã thêm ${addedCount} email, tổng cộng: ${updatedList.length}.`;
+            if (duplicateEmails.length > 0) {
+                message += ` ⚠️ Email trùng: ${duplicateEmails.join(', ')}`;
             }
-            document.getElementById('output').textContent = msg;
+            document.getElementById('output').textContent = message;
             document.getElementById('emailListInput').value = '';
             updateCount();
         }
@@ -184,31 +170,46 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
     copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa
+// Lấy & Copy 1 email + đếm ngược 5 giây
 document.getElementById('copyButton').addEventListener('click', () => {
     if (emailList.length === 0) {
         document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
         return;
     }
+
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const fullEmail = emailList[randomIndex];
     const email = fullEmail.split('|')[0];
 
-    copyText(email);
+    let countdown = 5;
+    document.getElementById('output').textContent = `⏳ Đang xử lý... Copy sau ${countdown} giây`;
 
-    emailRef.transaction(currentList => {
-        if (!currentList) return null;
-        currentList.splice(randomIndex, 1);
-        return currentList;
-    }, (error, committed, snapshot) => {
-        if (error) {
-            document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
-        } else if (committed) {
-            document.getElementById('emailOutput').value = email;
-            emailList = snapshot.val() || [];
-            updateCount();
+    const interval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            document.getElementById('output').textContent = `⏳ Đang xử lý... Copy sau ${countdown} giây`;
+        } else {
+            clearInterval(interval);
+
+            // Copy email
+            copyText(email);
+
+            // Xóa khỏi danh sách trên Firebase
+            emailRef.transaction(currentList => {
+                if (!currentList) return null;
+                currentList.splice(randomIndex, 1);
+                return currentList;
+            }, (error, committed, snapshot) => {
+                if (error) {
+                    document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
+                } else if (committed) {
+                    document.getElementById('emailOutput').value = email;
+                    emailList = snapshot.val() || [];
+                    updateCount();
+                }
+            });
         }
-    });
+    }, 1000);
 });
 </script>
 </body>
