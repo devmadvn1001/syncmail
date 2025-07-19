@@ -166,8 +166,35 @@ document.getElementById('copyButton').addEventListener('click', () => {
         document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
         return;
     }
+
+    // Disable button trong lúc xử lý
+    const btn = document.getElementById('copyButton');
+    btn.disabled = true;
+
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const fullEmail = emailList[randomIndex];
+    const email = fullEmail.split('|')[0]; // Tách phần email
+
+    copyText(email);
+
+    emailRef.transaction(currentList => {
+        if (!currentList) return null;
+        currentList.splice(randomIndex, 1);
+        return currentList;
+    }, (error, committed, snapshot) => {
+        btn.disabled = false; // Bật lại button
+
+        if (error) {
+            document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
+        } else if (committed) {
+            document.getElementById('emailOutput').value = email;
+            
+            // Cập nhật emailList từ dữ liệu mới
+            emailList = snapshot.val() || [];
+            updateCount();
+        }
+    });
+});
 
     // Tách lấy phần trước dấu "|"
     const email = fullEmail.split('|')[0];
