@@ -74,7 +74,7 @@
 
 <textarea id="emailListInput" placeholder="Dán email cần thêm, mỗi email 1 dòng..."></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
-<button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
+<button id="deleteListButton">🗑 Xóa Danh Sách Email</button>
 
 <div class="input-container">
   <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly />
@@ -142,7 +142,7 @@
     updateCount();
   });
 
-  // Thêm danh sách mail, loại bỏ trùng (so sánh không phân biệt hoa thường)
+  // Thêm danh sách mail, loại bỏ trùng
   document.getElementById('addListButton').addEventListener('click', () => {
     const input = document.getElementById('emailListInput').value.trim();
     if (!input) {
@@ -204,76 +204,51 @@
     });
   });
 
-
-
-
-
-
-
-
-
-
-  
-  // Copy thủ công email hiện ra ô input
-  document.getElementById('manualCopyButton').addEventListener('click', () => {
-    const email = document.getElementById('emailOutput').value;
-    if (!email) {
-      document.getElementById('output').textContent = '⚠️ Không có email để copy.';
+  // Lấy & Copy 1 email + xóa
+  document.getElementById('copyButton').addEventListener('click', () => {
+    if (emailList.length === 0) {
+      document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
       return;
     }
-    copyText(email);
+
+    let countdown = 5;
+    const copyButton = document.getElementById('copyButton');
+
+    // Hiển thị đếm ngược trên nút
+    const intervalId = setInterval(() => {
+      copyButton.textContent = `📋 Chờ ${countdown}s`;
+      countdown--;
+      if (countdown < 0) {
+        clearInterval(intervalId);
+        copyEmailAndRemove();
+      }
+    }, 1000);
   });
 
- document.getElementById('copyButton').addEventListener('click', () => {
-  const copyBtn = document.getElementById('copyButton');
-  copyBtn.disabled = true;
+  function copyEmailAndRemove() {
+    const randomIndex = Math.floor(Math.random() * emailList.length);
+    const fullEmail = emailList[randomIndex];
 
-  emailRef.transaction(currentList => {
-    if (!currentList || currentList.length === 0) {
-      document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
-      copyBtn.disabled = false;
-      return currentList;
-    }
-
-    // Chọn email đầu tiên, hoặc có thể chọn random nếu thích
-    const fullEmail = currentList[0];
+    // Tách phần trước dấu "|"
     const email = fullEmail.split('|')[0];
 
-    // Lưu lại để show ra sau khi commit
-    emailList = currentList.slice();
-    emailList.splice(0, 1); // xóa email đầu tiên
+    copyText(email);
 
-    // Cập nhật danh sách mới (không có email đã lấy)
-    // trả về giá trị đã xoá email để xử lý ngoài transaction
-    emailRef.newEmailTaken = email; // tạm lưu
-
-    return emailList;
-
-  }, (error, committed, snapshot) => {
-    copyBtn.disabled = false;
-
-    if (error) {
-      document.getElementById('output').textContent = '⚠️ Lỗi khi lấy email.';
-    } else if (!committed) {
-      document.getElementById('output').textContent = '⚠️ Không thể lấy email.';
-    } else {
-      // Lấy email khỏi biến tạm bên trên
-      const email = emailRef.newEmailTaken || null;
-      if (email) {
-        copyText(email);
+    emailRef.transaction(currentList => {
+      if (!currentList) return null;
+      currentList.splice(randomIndex, 1);
+      return currentList;
+    }, (error, committed, snapshot) => {
+      if (error) {
+        document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
+      } else if (committed) {
         document.getElementById('emailOutput').value = email;
+        emailList = snapshot.val() || [];
         updateCount();
-        emailRef.newEmailTaken = null; // reset
-      }
-      emailList = snapshot.val() || [];
-    }
-  });
-});
-
-
-
-
-  
+        document.getElementById('copyButton').textContent = `📋 Lấy & Copy Email`; // Đặt lại văn bản cho nút
+      }      
+    });
+  }
 </script>
 </body>
 </html>
