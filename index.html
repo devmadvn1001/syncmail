@@ -47,13 +47,12 @@ button:hover { background: #0056b3; }
 <script>
 // === Firebase Config ===
 const firebaseConfig = {
-  apiKey: "AIzaSyBSE3PBZSj16ryTe9rzO9wGoqInfTcjXqA",
-  authDomain: "andang-cb42d.firebaseapp.com",
-  projectId: "andang-cb42d",
-  storageBucket: "andang-cb42d.firebasestorage.app",
-  messagingSenderId: "890082057699",
-  appId: "1:890082057699:web:a2cfd13d1adf81252254d6",
-  measurementId: "G-1JVP0548W0"
+  apiKey: "AIzaSyCovYIxBHWy2FNGDwgxIvycf61sLwawxNM",
+  authDomain: "email-sync-tool-68801.firebaseapp.com",
+  projectId: "email-sync-tool-68801",
+  storageBucket: "email-sync-tool-68801.firebasestorage.app",
+  messagingSenderId: "736912872965",
+  appId: "1:736912872965:web:4f3581f0741c00db68ee6c"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -170,7 +169,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const fullEmail = emailList[randomIndex];
 
-    // Tách lấy phần trước dấu "|"
+   // Tách lấy phần trước dấu "|"
     const email = fullEmail.split('|')[0];
 
     // Copy phần email đã tách
