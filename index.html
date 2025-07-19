@@ -46,15 +46,15 @@ button:hover { background: #0056b3; }
 
 <script>
 // === Firebase Config ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
-    authDomain: "email-sync-tool-96986.firebaseapp.com",
-    databaseURL: "https://email-sync-tool-96986-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "email-sync-tool-96986",
-    storageBucket: "email-sync-tool-96986.firebasestorage.app",
-    messagingSenderId: "1037617074734",
-    appId: "1:1037617074734:web:769074e6da0efc030d45bf"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
+  authDomain: "email-sync-tool-96986.firebaseapp.com",
+  databaseURL: "https://email-sync-tool-96986-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "email-sync-tool-96986",
+  storageBucket: "email-sync-tool-96986.appspot.com",
+  messagingSenderId: "1037617074734",
+  appId: "1:1037617074734:web:769074e6da0efc030d45bf"
+};
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -65,12 +65,11 @@ function updateCount() {
     document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
-// Copy ổn định trên mọi trình duyệt
 function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
             document.getElementById('output').textContent = `✅ Đã copy: ${text}`;
-        }).catch(err => {
+        }).catch(() => {
             fallbackCopy(text);
         });
     } else {
@@ -102,19 +101,21 @@ emailRef.on('value', snapshot => {
     updateCount();
 });
 
-// Thêm danh sách mail
+// Thêm danh sách mail (có kiểm tra trùng)
 document.getElementById('addListButton').addEventListener('click', () => {
     const input = document.getElementById('emailListInput').value.trim();
     if (!input) {
         document.getElementById('output').textContent = '⚠️ Vui lòng dán danh sách email.';
         return;
     }
+
     const newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => e);
     if (newEmails.length === 0) {
         document.getElementById('output').textContent = '⚠️ Không có email hợp lệ.';
         return;
     }
-        emailRef.transaction(currentList => {
+
+    emailRef.transaction(currentList => {
         const updatedList = currentList ? currentList.slice() : [];
         const duplicates = [];
         const added = [];
@@ -128,9 +129,8 @@ document.getElementById('addListButton').addEventListener('click', () => {
             }
         });
 
-        if (added.length === 0) return; // Không thêm gì cả nếu tất cả đều trùng
+        if (added.length === 0) return; // không thêm gì cả nếu tất cả đều trùng
 
-        // Lưu lại thông báo để dùng sau transaction
         document._addedEmails = added;
         document._duplicateEmails = duplicates;
 
@@ -145,26 +145,15 @@ document.getElementById('addListButton').addEventListener('click', () => {
         if (error) {
             document.getElementById('output').textContent = '⚠️ Lỗi khi thêm email.';
         } else if (!committed) {
-            document.getElementById('output').textContent = '⚠️ Không thể thêm email (có thể tất cả đều trùng).';
+            document.getElementById('output').textContent = '⚠️ Tất cả email đã tồn tại, không thêm gì cả.';
         } else {
             let msg = `✅ Đã thêm ${added.length} email.`;
             if (duplicates.length > 0) {
-                msg += ` ⚠️ Bị trùng: ${duplicates.length} email không được thêm.`;
+                msg += ` ⚠️ Bị trùng ${duplicates.length} email.`;
+                // Nếu muốn hiển thị danh sách email trùng thì thêm:
+                // msg += `\nEmail trùng: ${duplicates.join(', ')}`;
             }
             document.getElementById('output').textContent = msg;
-            document.getElementById('emailListInput').value = '';
-            updateCount();
-        }
-    });
-
-        if (error) {
-            document.getElementById('output').textContent = '⚠️ Lỗi khi thêm email.';
-        } else if (!committed) {
-            document.getElementById('output').textContent = '⚠️ Không thể thêm email.';
-        } else {
-            const updatedList = snapshot.val() ? snapshot.val() : [];
-            const updatedCount = updatedList.length;
-            document.getElementById('output').textContent = `✅ Đã thêm ${newEmails.length} email, tổng cộng: ${updatedCount}.`;
             document.getElementById('emailListInput').value = '';
             updateCount();
         }
@@ -203,14 +192,10 @@ document.getElementById('copyButton').addEventListener('click', () => {
     }
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const fullEmail = emailList[randomIndex];
-
-   // Tách lấy phần trước dấu "|"
     const email = fullEmail.split('|')[0];
 
-    // Copy phần email đã tách
     copyText(email);
 
-    // Xóa khỏi danh sách
     emailRef.transaction(currentList => {
         if (!currentList) return null;
         currentList.splice(randomIndex, 1);
@@ -219,7 +204,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
         if (error) {
             document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
         } else if (committed) {
-            document.getElementById('emailOutput').value = email; // Hiển thị email đã tách
+            document.getElementById('emailOutput').value = email;
             emailList = snapshot.val() || [];
             updateCount();
         }
