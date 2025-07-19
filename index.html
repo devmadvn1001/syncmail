@@ -32,7 +32,7 @@ button:hover { background: #0056b3; }
 
 <textarea id="emailListInput" placeholder="Dán email cần thêm, mỗi email 1 dòng..."></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
-<button id="deleteListButton">🗑 Xóa Danh Sách Email</button>
+<button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
 
 <div class="input-container">
 <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly>
@@ -62,13 +62,13 @@ const emailRef = db.ref('emails');
 let emailList = [];
 
 function updateCount() {
-    document.getElementById('count').textContent = 📊 Số email còn lại: ${emailList.length};
+    document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
 function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
-            document.getElementById('output').textContent = ✅ Đã copy: ${text};
+            document.getElementById('output').textContent = `✅ Đã copy: ${text}`;
         }).catch(() => {
             fallbackCopy(text);
         });
@@ -87,7 +87,7 @@ function fallbackCopy(text) {
     textarea.select();
     try {
         const successful = document.execCommand('copy');
-        document.getElementById('output').textContent = successful ? ✅ Đã copy: ${text} : '⚠️ Không thể copy.';
+        document.getElementById('output').textContent = successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.';
     } catch (err) {
         document.getElementById('output').textContent = '⚠️ Lỗi khi copy.';
     }
@@ -108,7 +108,8 @@ document.getElementById('addListButton').addEventListener('click', () => {
         document.getElementById('output').textContent = '⚠️ Vui lòng dán danh sách email.';
         return;
     }
-const newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => e);
+
+    const newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => e);
     if (newEmails.length === 0) {
         document.getElementById('output').textContent = '⚠️ Không có email hợp lệ.';
         return;
@@ -135,8 +136,8 @@ const newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => 
 
         return updatedList;
     }, (error, committed, snapshot) => {
-        const added = document._addedEmails  [];
-        const duplicates = document._duplicateEmails  [];
+        const added = document._addedEmails || [];
+        const duplicates = document._duplicateEmails || [];
 
         delete document._addedEmails;
         delete document._duplicateEmails;
@@ -146,11 +147,11 @@ const newEmails = input.split(/\r?\n|\r|\u2028/).map(e => e.trim()).filter(e => 
         } else if (!committed) {
             document.getElementById('output').textContent = '⚠️ Tất cả email đã tồn tại, không thêm gì cả.';
         } else {
-            let msg = ✅ Đã thêm ${added.length} email.;
+            let msg = `✅ Đã thêm ${added.length} email.`;
             if (duplicates.length > 0) {
-                msg +=  ⚠️ Bị trùng ${duplicates.length} email.;
+                msg += ` ⚠️ Bị trùng ${duplicates.length} email.`;
                 // Nếu muốn hiển thị danh sách email trùng thì thêm:
-                // msg += \nEmail trùng: ${duplicates.join(', ')};
+                // msg += `\nEmail trùng: ${duplicates.join(', ')}`;
             }
             document.getElementById('output').textContent = msg;
             document.getElementById('emailListInput').value = '';
