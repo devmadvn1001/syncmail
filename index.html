@@ -144,36 +144,51 @@
 
   // Thêm danh sách mail, loại bỏ trùng (so sánh không phân biệt hoa thường)
 document.getElementById('copyButton').addEventListener('click', () => {
-  if (emailList.length === 0) {
-    document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
-    return;
-  }
-
+    if (emailList.length === 0) {
   const copyBtn = document.getElementById('copyButton');
   copyBtn.disabled = true;
 
-  const randomIndex = Math.floor(Math.random() * emailList.length);
-  const fullEmail = emailList[randomIndex];
-  const email = fullEmail.split('|')[0];
-
-  copyText(email);
-
   emailRef.transaction(currentList => {
-    if (!currentList) return null;
-    // Tìm index bằng giá trị email chính xác trong currentList
-    const index = currentList.findIndex(e => e === fullEmail);
-    if (index > -1) {
-      currentList.splice(index, 1);
+    if (!currentList || currentList.length === 0) {
+      document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
+      return;
+      copyBtn.disabled = false;
+      return currentList;
     }
-    return currentList;
+    const randomIndex = Math.floor(Math.random() * emailList.length);
+    const fullEmail = emailList[randomIndex];
+
+    // Chọn email đầu tiên, hoặc có thể chọn random nếu thích
+    const fullEmail = currentList[0];
+    const email = fullEmail.split('|')[0];
+
+    // Lưu lại để show ra sau khi commit
+    emailList = currentList.slice();
+    emailList.splice(0, 1); // xóa email đầu tiên
+
+    // Cập nhật danh sách mới (không có email đã lấy)
+    // trả về giá trị đã xoá email để xử lý ngoài transaction
+    emailRef.newEmailTaken = email; // tạm lưu
+
+    return emailList;
+
   }, (error, committed, snapshot) => {
     copyBtn.disabled = false;
+
     if (error) {
-      document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
-    } else if (committed) {
-      document.getElementById('emailOutput').value = email;
+      document.getElementById('output').textContent = '⚠️ Lỗi khi lấy email.';
+    } else if (!committed) {
+      document.getElementById('output').textContent = '⚠️ Không thể lấy email.';
+    } else {
+      // Lấy email khỏi biến tạm bên trên
+      const email = emailRef.newEmailTaken || null;
+      if (email) {
+        copyText(email);
+        document.getElementById('emailOutput').value = email;
+        updateCount();
+        emailRef.newEmailTaken = null; // reset
+      }
       emailList = snapshot.val() || [];
-      updateCount();
     }
   });
 });
