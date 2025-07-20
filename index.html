@@ -70,24 +70,24 @@ let emailList = [];
 
 
   
- // Tách phần trước dấu "|"
-    const email = fullEmail.split('|')[0];
-
-    copyText(email);
-
-    emailRef.transaction(currentList => {
-      if (!currentList) return null;
-      currentList.splice(randomIndex, 1);
-      return currentList;
-    }, (error, committed, snapshot) => {
-      if (error) {
-        document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
-      } else if (committed) {
-        document.getElementById('emailOutput').value = email;
-        emailList = snapshot.val() || [];
-        updateCount();
-      }      
+// ✅ Hàm tách email chuẩn, loại bỏ rác, phân cách bất kỳ
+function extractEmails(text) {
+    const separators = /[\s,;|]+/; // tách theo space, , ; |
+    const parts = text.split(separators);
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailSet = new Set();
+    parts.forEach(item => {
+        const cleaned = item.trim();
+        if (emailRegex.test(cleaned)) {
+            emailSet.add(cleaned.toLowerCase());
+        }
     });
+    return Array.from(emailSet);
+}
+
+function updateCount() {
+    document.getElementById('count').textContent = 📊 Số email còn lại: ${emailList.length};
+}
 
 
 
