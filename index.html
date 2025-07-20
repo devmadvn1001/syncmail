@@ -39,9 +39,6 @@ button:hover { background: #0056b3; }
 
 <script>
 // === Firebase Config ===
-
-
-
 const firebaseConfig = {
   apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
   authDomain: "email-sync-tool-96986.firebaseapp.com",
@@ -51,14 +48,6 @@ const firebaseConfig = {
   messagingSenderId: "1037617074734",
   appId: "1:1037617074734:web:769074e6da0efc030d45bf"
 };
-
-
-
-
-
-
-
-
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -171,18 +160,18 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
     copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa với đổi nền
+// Lấy & Copy 1 email + xóa với đổi nền + đổi màu nút sang vàng 15s rồi trả về
 document.getElementById('copyButton').addEventListener('click', () => {
     const copyButton = document.getElementById('copyButton');
     copyButton.disabled = true;
     copyButton.textContent = "⏳ Đang xử lý...";
-    document.body.style.background = "#17a2b8"; // ✅ đổi nền xanh da trời
+    document.body.style.background = "#17a2b8"; // đổi nền body tạm thời
 
     if (emailList.length === 0) {
         document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
         copyButton.disabled = false;
         copyButton.textContent = "📋 Lấy & Copy Email";
-        document.body.style.background = "#f0f2f5"; // ✅ trả lại nền
+        document.body.style.background = "#f0f2f5";
         return;
     }
 
@@ -200,14 +189,28 @@ document.getElementById('copyButton').addEventListener('click', () => {
     }, (error, committed, snapshot) => {
         if (error) {
             document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
-        } else if (committed) {
+            copyButton.disabled = false;
+            copyButton.textContent = "📋 Lấy & Copy Email";
+            document.body.style.background = "#f0f2f5";
+            return;
+        } 
+        if (committed) {
             document.getElementById('emailOutput').value = email;
             emailList = snapshot.val() || [];
             updateCount();
+
+            // Đổi màu nút sang vàng trong 15 giây, sau đó trả về màu cũ
+            const originalColor = copyButton.style.backgroundColor || '#28a745';
+            copyButton.style.backgroundColor = 'yellow';
+
+            setTimeout(() => {
+                copyButton.style.backgroundColor = originalColor;
+            }, 15000);
         }
+
         copyButton.disabled = false;
         copyButton.textContent = "📋 Lấy & Copy Email";
-        document.body.style.background = "#f0f2f5"; // ✅ trả lại nền
+        document.body.style.background = "#f0f2f5";
     });
 });
 </script>
