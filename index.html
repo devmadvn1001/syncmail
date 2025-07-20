@@ -66,7 +66,7 @@
       background: #0056b3;
     }
 
-    /* 🔔 Toast từ dưới lên */
+    /* Toast từ dưới lên */
     .toast {
       visibility: hidden;
       min-width: 280px;
@@ -110,7 +110,7 @@
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
-<!-- 🔔 Toast hiển thị -->
+<!-- Toast hiển thị -->
 <div id="toast" class="toast">Đã copy</div>
 
 <script>
@@ -147,7 +147,6 @@ function updateCount() {
   document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
-// ✅ Toast thông báo trượt lên
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -242,13 +241,11 @@ document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
   copyButton.textContent = "⏳ Đang xử lý...";
-  document.body.style.background = "#20c997"; // nền tạm thời
 
   if (emailList.length === 0) {
     showToast('✅ Danh sách đã hết email.');
     copyButton.disabled = false;
     copyButton.textContent = "📋 Lấy & Copy Email";
-    document.body.style.background = "#f0f2f5";
     return;
   }
 
@@ -268,14 +265,6 @@ document.getElementById('copyButton').addEventListener('click', () => {
       document.getElementById('emailOutput').value = email;
       emailList = snapshot.val() || [];
       updateCount();
-
-      const originalColor = '#007bff';
-      copyButton.style.backgroundColor = '#28a745'; // xanh lá
-
-      setTimeout(() => {
-        copyButton.style.backgroundColor = originalColor;
-        document.body.style.background = "#f0f2f5";
-      }, 8000);
     }
     copyButton.disabled = false;
     copyButton.textContent = "📋 Lấy & Copy Email";
