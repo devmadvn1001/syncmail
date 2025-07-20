@@ -15,15 +15,8 @@ button:hover { background: #0056b3; }
 #manualCopyButton { max-width: 60px; padding: 10px; }
 #deleteListButton { background: #dc3545; }
 #deleteListButton:hover { background: #a71d2a; }
-#copyButton { 
-    font-size: 20px; 
-    padding: 18px; 
-    width: 95%; 
-    max-width: 380px; 
-    margin-top: 30px; 
-    background: #17a2b8; /* xanh dương ban đầu */
-}
-#copyButton:hover { background: #0f94a9; }
+#copyButton { font-size: 20px; padding: 18px; width: 95%; max-width: 380px; margin-top: 30px; background: #007bff; } /* mặc định xanh dương */
+#copyButton:hover { background: #0056b3; }
 </style>
 </head>
 <body>
@@ -61,7 +54,6 @@ const db = firebase.database();
 const emailRef = db.ref('emails');
 let emailList = [];
 
-// Hàm tách email chuẩn
 function extractEmails(text) {
   const separators = /[\s,;|]+/;
   const parts = text.split(separators);
@@ -104,14 +96,12 @@ function fallbackCopy(text) {
   document.body.removeChild(textarea);
 }
 
-// Load danh sách mail realtime
 emailRef.on('value', snapshot => {
   const data = snapshot.val();
   emailList = data ? data : [];
   updateCount();
 });
 
-// Thêm danh sách mail đã lọc
 document.getElementById('addListButton').addEventListener('click', () => {
   const input = document.getElementById('emailListInput').value.trim();
   const filteredEmails = extractEmails(input);
@@ -142,7 +132,6 @@ document.getElementById('addListButton').addEventListener('click', () => {
   });
 });
 
-// Xóa toàn bộ danh sách
 document.getElementById('deleteListButton').addEventListener('click', () => {
   if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
   emailRef.set([], (error) => {
@@ -156,7 +145,6 @@ document.getElementById('deleteListButton').addEventListener('click', () => {
   });
 });
 
-// Copy thủ công
 document.getElementById('manualCopyButton').addEventListener('click', () => {
   const email = document.getElementById('emailOutput').value;
   if (!email) {
@@ -166,12 +154,11 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa với đổi nền + đổi màu nút sang xanh lá 8s rồi trả về xanh dương
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
   copyButton.textContent = "⏳ Đang xử lý...";
-  document.body.style.background = "#17a2b8"; // đổi nền body tạm thời
+  document.body.style.background = "#17a2b8"; // nền tạm thời
 
   if (emailList.length === 0) {
     document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
@@ -205,12 +192,11 @@ document.getElementById('copyButton').addEventListener('click', () => {
       emailList = snapshot.val() || [];
       updateCount();
 
-      // Đổi màu nền nút sang xanh lá (#28a745) trong 8 giây, sau đó trả về xanh dương (#17a2b8)
-      const originalColor = copyButton.style.backgroundColor || '#17a2b8';
+      // Chuyển sang màu xanh lá
       copyButton.style.backgroundColor = '#28a745';
 
       setTimeout(() => {
-        copyButton.style.backgroundColor = originalColor;
+        copyButton.style.backgroundColor = '#007bff'; // trở lại xanh dương
       }, 8000);
     }
 
@@ -221,4 +207,4 @@ document.getElementById('copyButton').addEventListener('click', () => {
 });
 </script>
 </body>
-    </html>
+</html>
