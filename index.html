@@ -60,16 +60,14 @@ const firebaseConfig = {
 
 
 
-
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
 let emailList = [];
 
-// ✅ Hàm tách email chuẩn, loại bỏ rác, phân cách bất kỳ
+// ✅ Hàm tách email chuẩn
 function extractEmails(text) {
-    const separators = /[\s,;|]+/; // tách theo space, , ; |
+    const separators = /[\s,;|]+/;
     const parts = text.split(separators);
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const emailSet = new Set();
@@ -111,14 +109,14 @@ function fallbackCopy(text) {
     document.body.removeChild(textarea);
 }
 
-// Load danh sách mail
+// Load danh sách mail realtime
 emailRef.on('value', snapshot => {
     const data = snapshot.val();
     emailList = data ? data : [];
     updateCount();
 });
 
-// ✅ Thêm danh sách mail tự động lọc khi bấm thêm
+// Thêm danh sách mail đã lọc
 document.getElementById('addListButton').addEventListener('click', () => {
     const input = document.getElementById('emailListInput').value.trim();
     const filteredEmails = extractEmails(input);
@@ -173,18 +171,29 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
     copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa
+// Lấy & Copy 1 email + xóa (có khóa nút tránh bấm nhanh)
 document.getElementById('copyButton').addEventListener('click', () => {
+    const copyButton = document.getElementById('copyButton');
+    copyButton.disabled = true;
+    copyButton.textContent = "⏳ Đang xử lý...";
+
     if (emailList.length === 0) {
         document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
+        copyButton.disabled = false;
+        copyButton.textContent = "📋 Lấy & Copy Email";
         return;
     }
+
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const email = emailList[randomIndex];
     copyText(email);
+
     emailRef.transaction(currentList => {
         if (!currentList) return null;
-        currentList.splice(randomIndex, 1);
+        const idx = currentList.indexOf(email);
+        if (idx !== -1) {
+            currentList.splice(idx, 1);
+        }
         return currentList;
     }, (error, committed, snapshot) => {
         if (error) {
@@ -194,6 +203,8 @@ document.getElementById('copyButton').addEventListener('click', () => {
             emailList = snapshot.val() || [];
             updateCount();
         }
+        copyButton.disabled = false;
+        copyButton.textContent = "📋 Lấy & Copy Email";
     });
 });
 </script>
