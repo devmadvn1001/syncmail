@@ -113,7 +113,12 @@
 </head>
 <body>
 
-<h3>📨 Quản lý danh sách Email Online (Tự Lọc & Lưu)</h3>
+<h3 style="text-align: center; line-height: 1.4; margin-bottom: 10px;">
+  📨 Quản lý danh sách Email Online<br>
+  <span style="display: inline-block; font-weight: normal; font-size: 90%; color: #555;">
+    (Tự Lọc & Lưu)
+  </span>
+</h3>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
@@ -129,7 +134,7 @@
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
-<!-- Toast hiển thị -->
+<!-- Toast -->
 <div id="toast" class="toast">Đã copy</div>
 
 <script>
@@ -166,9 +171,9 @@ function updateCount() {
   document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
-function showToast() {
+function showToast(message = "✅ Email đã được Copy !!!") {
   const toast = document.getElementById("toast");
-  toast.textContent = `✅ Email đã được Copy !!!`;
+  toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => {
     toast.classList.remove("show");
@@ -195,7 +200,7 @@ function fallbackCopy(text) {
     document.execCommand('copy');
     showToast();
   } catch {
-    showToast();
+    showToast("⚠️ Lỗi khi copy.");
   }
   document.body.removeChild(textarea);
 }
@@ -210,7 +215,7 @@ document.getElementById('addListButton').addEventListener('click', () => {
   const input = document.getElementById('emailListInput').value.trim();
   const filteredEmails = extractEmails(input);
   if (filteredEmails.length === 0) {
-    showToast();
+    showToast("⚠️ Không có email hợp lệ.");
     return;
   }
   emailRef.transaction(currentList => {
@@ -226,7 +231,9 @@ document.getElementById('addListButton').addEventListener('click', () => {
       document.getElementById('emailListInput').value = '';
       emailList = snapshot.val() || [];
       updateCount();
-      showToast();
+      showToast(`✅ Đã thêm ${filteredEmails.length} email.`);
+    } else {
+      showToast("⚠️ Không thể thêm email.");
     }
   });
 });
@@ -237,7 +244,9 @@ document.getElementById('deleteListButton').addEventListener('click', () => {
     if (!error) {
       emailList = [];
       updateCount();
-      showToast();
+      showToast("✅ Đã xóa toàn bộ email.");
+    } else {
+      showToast("⚠️ Lỗi khi xóa.");
     }
   });
 });
@@ -246,6 +255,8 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   const email = document.getElementById('emailOutput').value;
   if (email) {
     copyText(email);
+  } else {
+    showToast("⚠️ Không có email để copy.");
   }
 });
 
@@ -255,7 +266,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
   copyButton.innerHTML = '<span class="spinner"></span> Đang xử lý...';
 
   if (emailList.length === 0) {
-    showToast();
+    showToast("✅ Danh sách đã hết email.");
     copyButton.disabled = false;
     copyButton.innerHTML = "📋 Lấy & Copy Email";
     return;
