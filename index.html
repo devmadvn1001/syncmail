@@ -224,31 +224,32 @@
     copyText(email);
   });
 
-  // Lấy & Copy 1 email + xóa email đầu tiên trong danh sách (theo thứ tự)
+  // Lấy & Copy 1 email theo thứ tự + xóa email đầu tiên trong danh sách
   document.getElementById('copyButton').addEventListener('click', () => {
     if (emailList.length === 0) {
       document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
       return;
     }
 
+    // Lấy email đầu tiên trong danh sách hiện tại
     const fullEmail = emailList[0];
     const email = fullEmail.split('|')[0];
 
-    // Copy email đã tách
     copyText(email);
 
-    // Xóa email đầu tiên trên Firebase chính xác theo giá trị
     emailRef.transaction(currentList => {
       if (!currentList || currentList.length === 0) return null;
 
-      // Tìm vị trí email đầu tiên trong currentList (chắc chắn là 0)
       if (currentList[0] === fullEmail) {
         currentList.splice(0, 1);
       } else {
-        // Nếu vị trí khác, tìm vị trí và xóa chính xác email đó
+        // Nếu email đầu tiên trên local khác với Firebase, tìm và xóa chính xác trong danh sách Firebase
         const indexToRemove = currentList.findIndex(item => item === fullEmail);
-        if (indexToRemove > -1) currentList.splice(indexToRemove, 1);
-        else console.warn('Email không tìm thấy để xóa:', fullEmail);
+        if (indexToRemove > -1) {
+          currentList.splice(indexToRemove, 1);
+        } else {
+          console.warn('Email không tìm thấy trên Firebase:', fullEmail);
+        }
       }
       return currentList;
     }, (error, committed, snapshot) => {
