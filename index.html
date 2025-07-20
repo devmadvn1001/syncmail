@@ -70,7 +70,7 @@ let emailList = [];
 
 
   
-// Tách phần trước dấu "|"
+ // Tách phần trước dấu "|"
     const email = fullEmail.split('|')[0];
 
     copyText(email);
@@ -87,9 +87,7 @@ let emailList = [];
         emailList = snapshot.val() || [];
         updateCount();
       }      
-
-
-
+    });
 
 
 
