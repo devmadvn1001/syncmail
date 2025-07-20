@@ -14,7 +14,6 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      transition: background 0.4s;
     }
     textarea, input, button {
       font-size: 16px;
@@ -59,7 +58,8 @@
       padding: 18px;
       width: 95%;
       max-width: 380px;
-      margin-top: 30px;
+      margin-top: 25px;         /* Đẩy lên so với mặc định */
+      margin-bottom: 5px;       /* Cách phần dưới 5px */
       background: #007bff;
     }
     #copyButton:hover {
@@ -75,16 +75,16 @@
       color: #fff;
       text-align: center;
       border-radius: 8px;
-      padding: 21px; /* tăng 1.5 lần so với 14px */
+      padding: 21px;
       position: fixed;
       left: 50%;
       top: -80px;
       transform: translateX(-50%);
-      font-size: 24px; /* tăng 1.5 lần so với 16px */
+      font-size: 24px;
+      font-weight: 600;
       z-index: 9999;
       opacity: 0;
       transition: top 0.5s ease, opacity 0.5s ease;
-      font-weight: 600;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     .toast.show {
@@ -149,9 +149,9 @@ function updateCount() {
   document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
-function showToast(message) {
+function showToast() {
   const toast = document.getElementById("toast");
-  toast.textContent = message;
+  toast.textContent = `✅ Email đã được Copy !!!`;
   toast.classList.add("show");
   setTimeout(() => {
     toast.classList.remove("show");
@@ -161,7 +161,7 @@ function showToast(message) {
 function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
-      showToast(`✅ Đã copy: ${text}`);
+      showToast();
     }).catch(() => fallbackCopy(text));
   } else fallbackCopy(text);
 }
@@ -176,9 +176,9 @@ function fallbackCopy(text) {
   textarea.select();
   try {
     const successful = document.execCommand('copy');
-    showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.');
+    showToast();
   } catch {
-    showToast('⚠️ Lỗi khi copy.');
+    showToast();
   }
   document.body.removeChild(textarea);
 }
@@ -193,7 +193,7 @@ document.getElementById('addListButton').addEventListener('click', () => {
   const input = document.getElementById('emailListInput').value.trim();
   const filteredEmails = extractEmails(input);
   if (filteredEmails.length === 0) {
-    showToast('⚠️ Không có email hợp lệ để thêm.');
+    showToast();
     return;
   }
   emailRef.transaction(currentList => {
@@ -205,14 +205,11 @@ document.getElementById('addListButton').addEventListener('click', () => {
     });
     return updatedList;
   }, (error, committed, snapshot) => {
-    if (error || !committed) {
-      showToast('⚠️ Lỗi khi thêm email.');
-    } else {
-      const updatedList = snapshot.val() || [];
-      showToast(`✅ Đã thêm ${filteredEmails.length} email.`);
+    if (committed) {
       document.getElementById('emailListInput').value = '';
-      emailList = updatedList;
+      emailList = snapshot.val() || [];
       updateCount();
+      showToast();
     }
   });
 });
@@ -220,23 +217,19 @@ document.getElementById('addListButton').addEventListener('click', () => {
 document.getElementById('deleteListButton').addEventListener('click', () => {
   if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
   emailRef.set([], (error) => {
-    if (error) {
-      showToast('⚠️ Lỗi khi xóa danh sách.');
-    } else {
-      showToast('✅ Đã xóa toàn bộ danh sách email.');
+    if (!error) {
       emailList = [];
       updateCount();
+      showToast();
     }
   });
 });
 
 document.getElementById('manualCopyButton').addEventListener('click', () => {
   const email = document.getElementById('emailOutput').value;
-  if (!email) {
-    showToast('⚠️ Không có email để copy.');
-    return;
+  if (email) {
+    copyText(email);
   }
-  copyText(email);
 });
 
 document.getElementById('copyButton').addEventListener('click', () => {
@@ -245,7 +238,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
   copyButton.textContent = "⏳ Đang xử lý...";
 
   if (emailList.length === 0) {
-    showToast('✅ Danh sách đã hết email.');
+    showToast();
     copyButton.disabled = false;
     copyButton.textContent = "📋 Lấy & Copy Email";
     return;
