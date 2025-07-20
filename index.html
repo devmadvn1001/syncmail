@@ -66,6 +66,21 @@
       background: #0056b3;
     }
 
+    /* Tiêu đề lớn, 2 dòng */
+    h3 {
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 10px;
+      font-size: 1.5em;
+      font-weight: 600;
+    }
+    h3 span {
+      display: inline-block;
+      font-weight: normal;
+      font-size: 0.8em;
+      color: #555;
+    }
+
     /* Toast từ trên xuống */
     .toast {
       visibility: hidden;
@@ -113,11 +128,9 @@
 </head>
 <body>
 
-<h3 style="text-align: center; line-height: 1.4; margin-bottom: 10px;">
+<h3>
   📨 Quản lý danh sách Email Online<br>
-  <span style="display: inline-block; font-weight: normal; font-size: 90%; color: #555;">
-    (Tự Lọc & Lưu)
-  </span>
+  <span>(Tự Lọc & Lưu)</span>
 </h3>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
@@ -263,12 +276,12 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
-  copyButton.innerHTML = '<span class="spinner"></span> Đang xử lý...';
+  copyButton.textContent = '⏳ <span class="spinner"></span> Đang xử lý...';
 
   if (emailList.length === 0) {
-    showToast("✅ Danh sách đã hết email.");
+    showToast('✅ Danh sách đã hết email.');
     copyButton.disabled = false;
-    copyButton.innerHTML = "📋 Lấy & Copy Email";
+    copyButton.textContent = "📋 Lấy & Copy Email";
     return;
   }
 
@@ -284,15 +297,19 @@ document.getElementById('copyButton').addEventListener('click', () => {
     }
     return currentList;
   }, (error, committed, snapshot) => {
+    copyButton.disabled = false;
+    copyButton.textContent = "📋 Lấy & Copy Email";
+
     if (committed) {
       document.getElementById('emailOutput').value = email;
       emailList = snapshot.val() || [];
       updateCount();
+    } else if (error) {
+      showToast("⚠️ Lỗi khi xóa email.");
     }
-    copyButton.disabled = false;
-    copyButton.innerHTML = "📋 Lấy & Copy Email";
   });
 });
 </script>
+
 </body>
 </html>
