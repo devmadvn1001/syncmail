@@ -77,7 +77,6 @@ button:hover {
   max-width: 400px;
   pointer-events: none;
 }
-
 .toast {
   background: rgba(40, 167, 69, 0.95);
   color: #fff;
@@ -85,7 +84,7 @@ button:hover {
   margin: 10px auto 0 auto;
   border-radius: 6px;
   box-shadow: 0 3px 8px rgb(0 0 0 / 0.2);
-  font-size: 1.5em; /* to hơn 1.5 lần */
+  font-size: 1.5em;
   max-width: 100%;
   box-sizing: border-box;
   pointer-events: auto;
@@ -93,6 +92,9 @@ button:hover {
   opacity: 0;
   animation: slideDown 0.4s forwards;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @keyframes slideDown {
@@ -148,7 +150,6 @@ const db = firebase.database();
 const emailRef = db.ref('emails');
 let emailList = [];
 
-// Hàm tách email chuẩn
 function extractEmails(text) {
   const separators = /[\s,;|]+/;
   const parts = text.split(separators);
@@ -199,20 +200,17 @@ let currentToast = null;
 function showToast(message = "✅ Email đã được Copy !!!") {
   const container = document.getElementById("toastContainer");
 
-  // Nếu có toast cũ, xóa ngay lập tức
   if (currentToast) {
     container.removeChild(currentToast);
     currentToast = null;
   }
 
-  // Tạo toast mới
   const toast = document.createElement("div");
   toast.classList.add("toast");
   toast.textContent = message;
   container.appendChild(toast);
   currentToast = toast;
 
-  // Tự động xóa toast sau 5 giây
   setTimeout(() => {
     if (toast.parentNode) {
       container.removeChild(toast);
@@ -283,7 +281,7 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa với đổi nút
+// Lấy & Copy 1 email
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
