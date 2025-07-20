@@ -134,18 +134,32 @@
       transform: translateY(0);
     }
   }
-  /* Dark mode toggle */
+  /* Dark mode toggle với khung viền */
   #darkModeToggle {
     margin: 20px 0 10px;
     cursor: pointer;
     font-size: 1em;
     user-select: none;
     color: #007bff;
-    border: none;
     background: transparent;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    padding: 10px 20px;
+    width: 90%;
+    max-width: 340px;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
   }
   #darkModeToggle:hover {
-    text-decoration: underline;
+    background-color: #007bff;
+    color: #fff;
+  }
+  body.dark #darkModeToggle {
+    color: #90caf9;
+    border-color: #90caf9;
+  }
+  body.dark #darkModeToggle:hover {
+    background-color: #90caf9;
+    color: #121212;
   }
 </style>
 </head>
@@ -155,8 +169,6 @@
   📨 Quản lý danh sách Email Online<br />
   <small style="font-weight: normal; font-size: 0.7em;">(Tự Lọc & Lưu)</small>
 </h3>
-
-<button id="darkModeToggle" aria-pressed="false">🌙 Bật Dark Mode</button>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
@@ -171,6 +183,9 @@
 <p id="output"></p>
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
+
+<!-- Nút Dark Mode đặt dưới nút copy -->
+<button id="darkModeToggle" aria-pressed="false">🌙 Bật Dark Mode</button>
 
 <!-- Toast container -->
 <div id="toastContainer"></div>
@@ -193,7 +208,6 @@
   const darkModeRef = db.ref('settings/darkMode');
   let emailList = [];
 
-  // Hàm tách email chuẩn
   function extractEmails(text) {
     const separators = /[\s,;|]+/;
     const parts = text.split(separators);
@@ -243,22 +257,16 @@
   let currentToast = null;
   function showToast(message = "✅ Email đã được Copy !!!", isError = false) {
     const container = document.getElementById("toastContainer");
-
-    // Nếu có toast cũ, xóa ngay lập tức
     if (currentToast) {
       container.removeChild(currentToast);
       currentToast = null;
     }
-
-    // Tạo toast mới
     const toast = document.createElement("div");
     toast.classList.add("toast");
     if(isError) toast.classList.add("error");
     toast.textContent = message;
     container.appendChild(toast);
     currentToast = toast;
-
-    // Tự động xóa toast sau 5 giây
     setTimeout(() => {
       if (toast.parentNode) {
         container.removeChild(toast);
@@ -267,14 +275,12 @@
     }, 5000);
   }
 
-  // Load danh sách mail realtime
   emailRef.on('value', snapshot => {
     const data = snapshot.val();
     emailList = data ? data : [];
     updateCount();
   });
 
-  // Thêm danh sách mail đã lọc
   document.getElementById('addListButton').addEventListener('click', () => {
     const input = document.getElementById('emailListInput').value.trim();
     const filteredEmails = extractEmails(input);
@@ -305,7 +311,6 @@
     });
   });
 
-  // Xóa toàn bộ danh sách
   document.getElementById('deleteListButton').addEventListener('click', () => {
     if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
     emailRef.set([], (error) => {
@@ -319,7 +324,6 @@
     });
   });
 
-  // Copy thủ công
   document.getElementById('manualCopyButton').addEventListener('click', () => {
     const email = document.getElementById('emailOutput').value;
     if (!email) {
@@ -329,7 +333,6 @@
     copyText(email);
   });
 
-  // Lấy & Copy 1 email + xóa với đổi nút
   document.getElementById('copyButton').addEventListener('click', () => {
     const copyButton = document.getElementById('copyButton');
     copyButton.disabled = true;
@@ -371,7 +374,6 @@
 
   const darkModeToggle = document.getElementById('darkModeToggle');
 
-  // Áp dark mode theo value realtime DB
   darkModeRef.on('value', snapshot => {
     const val = snapshot.val();
     if (val === true) {
@@ -392,11 +394,9 @@
     darkModeToggle.setAttribute('aria-pressed', 'false');
   }
 
-  // Khi click nút toggle dark mode
   darkModeToggle.addEventListener('click', () => {
     const isDark = document.body.classList.contains('dark');
     darkModeRef.set(!isDark).catch(() => {
-      // Nếu lỗi set DB, fallback toggle ngay client
       if (isDark) disableDarkMode();
       else enableDarkMode();
       showToast("⚠️ Lỗi khi cập nhật dark mode.", true);
