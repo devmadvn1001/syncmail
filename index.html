@@ -15,8 +15,15 @@ button:hover { background: #0056b3; }
 #manualCopyButton { max-width: 60px; padding: 10px; }
 #deleteListButton { background: #dc3545; }
 #deleteListButton:hover { background: #a71d2a; }
-#copyButton { font-size: 20px; padding: 18px; width: 95%; max-width: 380px; margin-top: 30px; background: #28a745; }
-#copyButton:hover { background: #1c7c31; }
+#copyButton { 
+    font-size: 20px; 
+    padding: 18px; 
+    width: 95%; 
+    max-width: 380px; 
+    margin-top: 30px; 
+    background: #17a2b8; /* xanh dương ban đầu */
+}
+#copyButton:hover { background: #0f94a9; }
 </style>
 </head>
 <body>
@@ -159,7 +166,7 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa với đổi nền + đổi màu nút sang xanh dương 8s rồi trả về
+// Lấy & Copy 1 email + xóa với đổi nền + đổi màu nút sang xanh lá 8s rồi trả về xanh dương
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
@@ -198,9 +205,9 @@ document.getElementById('copyButton').addEventListener('click', () => {
       emailList = snapshot.val() || [];
       updateCount();
 
-      // Đổi màu nền nút sang xanh dương (#17a2b8) trong 8 giây, sau đó trả về màu cũ
-      const originalColor = copyButton.style.backgroundColor || '#28a745';
-      copyButton.style.backgroundColor = '#17a2b8';
+      // Đổi màu nền nút sang xanh lá (#28a745) trong 8 giây, sau đó trả về xanh dương (#17a2b8)
+      const originalColor = copyButton.style.backgroundColor || '#17a2b8';
+      copyButton.style.backgroundColor = '#28a745';
 
       setTimeout(() => {
         copyButton.style.backgroundColor = originalColor;
@@ -214,4 +221,4 @@ document.getElementById('copyButton').addEventListener('click', () => {
 });
 </script>
 </body>
-</html>
+    </html>
