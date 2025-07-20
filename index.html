@@ -58,8 +58,8 @@
       padding: 18px;
       width: 95%;
       max-width: 380px;
-      margin-top: 25px;         /* Đẩy lên so với mặc định */
-      margin-bottom: 5px;       /* Cách phần dưới 5px */
+      margin-top: 25px;
+      margin-bottom: 5px;
       background: #007bff;
     }
     #copyButton:hover {
@@ -91,6 +91,23 @@
       visibility: visible;
       top: 40px;
       opacity: 1;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -175,7 +192,7 @@ function fallbackCopy(text) {
   textarea.focus();
   textarea.select();
   try {
-    const successful = document.execCommand('copy');
+    document.execCommand('copy');
     showToast();
   } catch {
     showToast();
@@ -235,12 +252,12 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
-  copyButton.textContent = "⏳ Đang xử lý...";
+  copyButton.innerHTML = '<span class="spinner"></span> Đang xử lý...';
 
   if (emailList.length === 0) {
     showToast();
     copyButton.disabled = false;
-    copyButton.textContent = "📋 Lấy & Copy Email";
+    copyButton.innerHTML = "📋 Lấy & Copy Email";
     return;
   }
 
@@ -262,7 +279,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
       updateCount();
     }
     copyButton.disabled = false;
-    copyButton.textContent = "📋 Lấy & Copy Email";
+    copyButton.innerHTML = "📋 Lấy & Copy Email";
   });
 });
 </script>
