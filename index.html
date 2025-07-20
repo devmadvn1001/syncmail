@@ -15,7 +15,11 @@
     align-items: center;
     padding: 20px;
     transition: background 0.4s, color 0.4s;
-    color: #222;
+    color: #000;
+  }
+  body.dark {
+    background: #121212;
+    color: #eee;
   }
   textarea, input, button {
     font-size: 16px;
@@ -26,7 +30,15 @@
     border-radius: 6px;
     border: 1px solid #ccc;
     box-sizing: border-box;
-    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    background: #fff;
+    color: #000;
+    transition: background 0.4s, color 0.4s, border-color 0.4s;
+  }
+  body.dark textarea,
+  body.dark input {
+    background: #222;
+    color: #eee;
+    border-color: #555;
   }
   button {
     background: #007bff;
@@ -38,6 +50,12 @@
   }
   button:hover {
     background: #0056b3;
+  }
+  body.dark button {
+    background: #1e88e5;
+  }
+  body.dark button:hover {
+    background: #1565c0;
   }
   .input-container {
     display: flex;
@@ -67,25 +85,12 @@
   #copyButton:hover {
     background: #0056b3;
   }
-  #darkModeToggle {
-    margin-top: 15px;
-    width: 90%;
-    max-width: 340px;
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #007bff;
-    background: white;
-    color: #007bff;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.3s, color 0.3s;
+  body.dark #deleteListButton {
+    background: #d32f2f;
   }
-  #darkModeToggle:hover {
-    background: #007bff;
-    color: white;
+  body.dark #deleteListButton:hover {
+    background: #9a2424;
   }
-
   /* Toast container & toast style */
   #toastContainer {
     position: fixed;
@@ -97,7 +102,6 @@
     max-width: 400px;
     pointer-events: none;
   }
-
   .toast {
     background: rgba(40, 167, 69, 0.95);
     color: #fff;
@@ -105,7 +109,7 @@
     margin: 10px auto 0 auto;
     border-radius: 6px;
     box-shadow: 0 3px 8px rgb(0 0 0 / 0.2);
-    font-size: 1.2em; /* 1.2 lần */
+    font-size: 1.2em; /* chữ toast nhỏ hơn 1.2 lần */
     max-width: 100%;
     box-sizing: border-box;
     pointer-events: auto;
@@ -113,13 +117,13 @@
     opacity: 0;
     animation: slideDown 0.4s forwards;
     user-select: none;
-
-    /* Giữ 1 dòng và rút gọn dấu ... */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
+  .toast.error {
+    background: rgba(220, 53, 69, 0.95); /* đỏ cho lỗi */
+  }
   @keyframes slideDown {
     from {
       opacity: 0;
@@ -130,43 +134,18 @@
       transform: translateY(0);
     }
   }
-
-  /* Dark mode styles */
-  body.dark {
-    background: #121212;
-    color: #eee;
+  /* Dark mode toggle */
+  #darkModeToggle {
+    margin: 20px 0 10px;
+    cursor: pointer;
+    font-size: 1em;
+    user-select: none;
+    color: #007bff;
+    border: none;
+    background: transparent;
   }
-  body.dark textarea,
-  body.dark input,
-  body.dark button {
-    background: #222;
-    color: #eee;
-    border: 1px solid #444;
-  }
-  body.dark button {
-    background: #1db954;
-  }
-  body.dark button:hover {
-    background: #17a54d;
-  }
-  body.dark #deleteListButton {
-    background: #d9534f;
-  }
-  body.dark #deleteListButton:hover {
-    background: #b7413f;
-  }
-  body.dark .toast {
-    background: rgba(30, 215, 96, 0.9);
-    color: #fff;
-  }
-  body.dark #darkModeToggle {
-    background: #222;
-    color: #1db954;
-    border-color: #1db954;
-  }
-  body.dark #darkModeToggle:hover {
-    background: #1db954;
-    color: #222;
+  #darkModeToggle:hover {
+    text-decoration: underline;
   }
 </style>
 </head>
@@ -176,6 +155,8 @@
   📨 Quản lý danh sách Email Online<br />
   <small style="font-weight: normal; font-size: 0.7em;">(Tự Lọc & Lưu)</small>
 </h3>
+
+<button id="darkModeToggle" aria-pressed="false">🌙 Bật Dark Mode</button>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
@@ -190,8 +171,6 @@
 <p id="output"></p>
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
-
-<button id="darkModeToggle" aria-pressed="false">🌙 Bật Dark Mode</button>
 
 <!-- Toast container -->
 <div id="toastContainer"></div>
@@ -211,6 +190,7 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const emailRef = db.ref('emails');
+  const darkModeRef = db.ref('settings/darkMode');
   let emailList = [];
 
   // Hàm tách email chuẩn
@@ -252,16 +232,16 @@
       if(successful) {
         showToast(`✅ Đã copy: ${text}`);
       } else {
-        showToast('⚠️ Không thể copy.');
+        showToast('⚠️ Không thể copy.', true);
       }
     } catch {
-      showToast('⚠️ Lỗi khi copy.');
+      showToast('⚠️ Lỗi khi copy.', true);
     }
     document.body.removeChild(textarea);
   }
 
   let currentToast = null;
-  function showToast(message = "✅ Email đã được Copy !!!") {
+  function showToast(message = "✅ Email đã được Copy !!!", isError = false) {
     const container = document.getElementById("toastContainer");
 
     // Nếu có toast cũ, xóa ngay lập tức
@@ -273,6 +253,7 @@
     // Tạo toast mới
     const toast = document.createElement("div");
     toast.classList.add("toast");
+    if(isError) toast.classList.add("error");
     toast.textContent = message;
     container.appendChild(toast);
     currentToast = toast;
@@ -298,7 +279,7 @@
     const input = document.getElementById('emailListInput').value.trim();
     const filteredEmails = extractEmails(input);
     if (filteredEmails.length === 0) {
-      showToast('⚠️ Không có email hợp lệ để thêm.');
+      showToast('⚠️ Không có email hợp lệ để thêm.', true);
       return;
     }
     emailRef.transaction(currentList => {
@@ -311,9 +292,9 @@
       return updatedList;
     }, (error, committed, snapshot) => {
       if (error) {
-        showToast('⚠️ Lỗi khi thêm email.');
+        showToast('⚠️ Lỗi khi thêm email.', true);
       } else if (!committed) {
-        showToast('⚠️ Không thể thêm email.');
+        showToast('⚠️ Không thể thêm email.', true);
       } else {
         const updatedList = snapshot.val() ? snapshot.val() : [];
         showToast(`✅ Đã thêm ${filteredEmails.length} email hợp lệ, tổng: ${updatedList.length}.`);
@@ -329,7 +310,7 @@
     if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
     emailRef.set([], (error) => {
       if (error) {
-        showToast('⚠️ Lỗi khi xóa danh sách.');
+        showToast('⚠️ Lỗi khi xóa danh sách.', true);
       } else {
         showToast('✅ Đã xóa toàn bộ danh sách email.');
         emailList = [];
@@ -342,7 +323,7 @@
   document.getElementById('manualCopyButton').addEventListener('click', () => {
     const email = document.getElementById('emailOutput').value;
     if (!email) {
-      showToast("⚠️ Không có email để copy.");
+      showToast("⚠️ Không có email để copy.", true);
       return;
     }
     copyText(email);
@@ -355,7 +336,7 @@
     copyButton.textContent = "⏳ Đang xử lý...";
 
     if (emailList.length === 0) {
-      showToast('✅ Danh sách đã hết email.');
+      showToast('⚠️ Danh sách đã hết email.', true);
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
       return;
@@ -381,53 +362,45 @@
         emailList = snapshot.val() || [];
         updateCount();
       } else if (error) {
-        showToast("⚠️ Lỗi khi xóa email.");
+        showToast("⚠️ Lỗi khi xóa email.", true);
       }
     });
   });
 
-  // Dark mode toggle logic
-  const darkToggleBtn = document.getElementById('darkModeToggle');
+  // DARK MODE
 
-  // Kiểm tra và áp dụng dark mode dựa vào lưu trữ hoặc hệ thống
-  function applyDarkMode(mode) {
-    if (mode === 'dark') {
-      document.body.classList.add('dark');
-      darkToggleBtn.textContent = "☀️ Tắt Dark Mode";
-      darkToggleBtn.setAttribute('aria-pressed', 'true');
+  const darkModeToggle = document.getElementById('darkModeToggle');
+
+  // Áp dark mode theo value realtime DB
+  darkModeRef.on('value', snapshot => {
+    const val = snapshot.val();
+    if (val === true) {
+      enableDarkMode();
     } else {
-      document.body.classList.remove('dark');
-      darkToggleBtn.textContent = "🌙 Bật Dark Mode";
-      darkToggleBtn.setAttribute('aria-pressed', 'false');
-    }
-  }
-
-  // Lấy trạng thái dark mode lưu trong localStorage
-  function getStoredMode() {
-    return localStorage.getItem('darkMode');
-  }
-
-  // Lấy trạng thái hệ thống dark mode
-  function getSystemMode() {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-
-  // Khởi tạo trạng thái dark mode lúc đầu
-  let currentMode = getStoredMode() || getSystemMode();
-  applyDarkMode(currentMode);
-
-  // Lắng nghe sự kiện thay đổi hệ thống (nếu user chưa chọn thủ công)
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (!getStoredMode()) {
-      applyDarkMode(e.matches ? 'dark' : 'light');
+      disableDarkMode();
     }
   });
 
-  // Xử lý khi click nút
-  darkToggleBtn.addEventListener('click', () => {
-    currentMode = currentMode === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('darkMode', currentMode);
-    applyDarkMode(currentMode);
+  function enableDarkMode() {
+    document.body.classList.add('dark');
+    darkModeToggle.textContent = "☀️ Tắt Dark Mode";
+    darkModeToggle.setAttribute('aria-pressed', 'true');
+  }
+  function disableDarkMode() {
+    document.body.classList.remove('dark');
+    darkModeToggle.textContent = "🌙 Bật Dark Mode";
+    darkModeToggle.setAttribute('aria-pressed', 'false');
+  }
+
+  // Khi click nút toggle dark mode
+  darkModeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.contains('dark');
+    darkModeRef.set(!isDark).catch(() => {
+      // Nếu lỗi set DB, fallback toggle ngay client
+      if (isDark) disableDarkMode();
+      else enableDarkMode();
+      showToast("⚠️ Lỗi khi cập nhật dark mode.", true);
+    });
   });
 </script>
 
