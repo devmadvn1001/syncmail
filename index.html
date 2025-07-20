@@ -40,6 +40,10 @@ button:hover { background: #0056b3; }
 <script>
 // === Firebase Config ===
 
+
+
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
   authDomain: "email-sync-tool-96986.firebaseapp.com",
@@ -58,18 +62,11 @@ const firebaseConfig = {
 
 
 
-
-
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
 let emailList = [];
 
-
-
-
-  
 // ✅ Hàm tách email chuẩn, loại bỏ rác, phân cách bất kỳ
 function extractEmails(text) {
     const separators = /[\s,;|]+/; // tách theo space, , ; |
@@ -84,14 +81,6 @@ function extractEmails(text) {
     });
     return Array.from(emailSet);
 }
-
-function updateCount() {
-    document.getElementById('count').textContent = 📊 Số email còn lại: ${emailList.length};
-}
-
-
-
-  
 
 function updateCount() {
     document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
