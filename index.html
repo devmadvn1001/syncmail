@@ -7,16 +7,64 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
-body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; transition: background 0.4s; }
-textarea, input, button { font-size: 16px; width: 90%; max-width: 340px; margin-top: 10px; padding: 12px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-button { background: #007bff; color: white; border: none; cursor: pointer; transition: background 0.3s; }
-button:hover { background: #0056b3; }
-.input-container { display: flex; gap: 10px; align-items: center; width: 90%; max-width: 340px; margin-top: 10px; }
-#manualCopyButton { max-width: 60px; padding: 10px; }
-#deleteListButton { background: #dc3545; }
-#deleteListButton:hover { background: #a71d2a; }
-#copyButton { font-size: 20px; padding: 18px; width: 95%; max-width: 380px; margin-top: 30px; background: #007bff; } /* mặc định xanh dương */
-#copyButton:hover { background: #0056b3; }
+body {
+  font-family: sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  transition: background 0.4s;
+}
+textarea, input, button {
+  font-size: 16px;
+  width: 90%;
+  max-width: 340px;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover {
+  background: #0056b3;
+}
+.input-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 90%;
+  max-width: 340px;
+  margin-top: 10px;
+}
+#manualCopyButton {
+  max-width: 60px;
+  padding: 10px;
+}
+#deleteListButton {
+  background: #dc3545;
+}
+#deleteListButton:hover {
+  background: #a71d2a;
+}
+#copyButton {
+  font-size: 20px;
+  padding: 18px;
+  width: 95%;
+  max-width: 380px;
+  margin-top: 30px;
+  background: #007bff;
+}
+#copyButton:hover {
+  background: #0056b3;
+}
 </style>
 </head>
 <body>
@@ -28,8 +76,8 @@ button:hover { background: #0056b3; }
 <button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
 
 <div class="input-container">
-<input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly />
-<button id="manualCopyButton">📋</button>
+  <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly />
+  <button id="manualCopyButton">📋</button>
 </div>
 
 <p id="count"></p>
@@ -192,17 +240,17 @@ document.getElementById('copyButton').addEventListener('click', () => {
       emailList = snapshot.val() || [];
       updateCount();
 
-      // Chuyển sang màu xanh lá
+      // Đổi màu nút sang xanh lá, và nền body trong 8s
       copyButton.style.backgroundColor = '#28a745';
 
       setTimeout(() => {
-        copyButton.style.backgroundColor = '#007bff'; // trở lại xanh dương
+        copyButton.style.backgroundColor = '#007bff';  // Trả về màu gốc
+        document.body.style.background = "#f0f2f5";     // Trả về nền gốc
       }, 8000);
     }
 
     copyButton.disabled = false;
     copyButton.textContent = "📋 Lấy & Copy Email";
-    document.body.style.background = "#f0f2f5";
   });
 });
 </script>
