@@ -292,36 +292,6 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
 
 let lastCopyTimestamp = 0;
 let checkDupTimeout = null;
-let isCheckingDup = false;
-
-function checkDuplicateEmails() {
-  if (isCheckingDup) return;
-  isCheckingDup = true;
-  const checkDuration = 10000;
-  const now = Date.now();
-  copyLogsRef.orderByChild('time').startAt(now - 15000).once('value').then(snapshot => {
-    const logs = snapshot.val() || {};
-    const arrLogs = Object.values(logs);
-    const emailDeviceMap = {};
-    arrLogs.forEach(log => {
-      if (!emailDeviceMap[log.email]) {
-        emailDeviceMap[log.email] = new Set();
-      }
-      emailDeviceMap[log.email].add(log.deviceId);
-    });
-
-    for (const [email, devices] of Object.entries(emailDeviceMap)) {
-      if (devices.size > 1) {
-        showToast(`⚠️ Email "${email}" bị lấy trùng trên nhiều thiết bị!`, false, false, true, 20000);
-        break;
-      }
-    }
-
-    isCheckingDup = false;
-  }).catch(() => {
-    isCheckingDup = false;
-  });
-}
 
 function onCopyEmail(email) {
   const now = Date.now();
@@ -329,9 +299,25 @@ function onCopyEmail(email) {
   const logKey = now + '_' + deviceId;
   copyLogsRef.child(logKey).set({ email, time: now, deviceId });
 
+  // Kiểm tra nếu email này đã từng được copy bởi thiết bị khác trong 15s gần nhất
+  copyLogsRef.orderByChild('time').startAt(now - 15000).once('value').then(snapshot => {
+    const logs = snapshot.val() || {};
+    let trùng = false;
+    for (const key in logs) {
+      const log = logs[key];
+      if (log.email === email && log.deviceId !== deviceId) {
+        trùng = true;
+        break;
+      }
+    }
+    if (trùng) {
+      showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, false, false, true, 20000);
+    }
+  });
+
   if (checkDupTimeout) clearTimeout(checkDupTimeout);
   checkDupTimeout = setTimeout(() => {
-    checkDuplicateEmails();
+    // bạn vẫn có thể giữ hàm checkDuplicateEmails() nếu muốn dùng
   }, 15000);
 }
 
@@ -365,10 +351,7 @@ document.getElementById('copyButton').addEventListener('click', () => {
       document.getElementById('emailOutput').value = email;
       emailList = snapshot.val() || [];
       updateCount();
-
-      const now = Date.now();
-      lastCopiedRef.set({ email, time: now, deviceId });
-
+      lastCopiedRef.set({ email, time: Date.now(), deviceId });
       onCopyEmail(email);
     }
     copyButton.disabled = false;
