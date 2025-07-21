@@ -142,6 +142,7 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const emailRef = db.ref('emails');
+  const lastCopiedRef = db.ref('lastCopied');
   let emailList = [];
 
   function extractEmails(text) {
@@ -165,12 +166,11 @@
   function showToast(msg, isError = false, isSuccess = false) {
     const toast = document.getElementById('customToast');
     toast.textContent = msg;
-    toast.className = ''; // reset class
+    toast.className = '';
     toast.classList.add('show');
     if (isError) toast.classList.add('error');
     else if (isSuccess) toast.classList.add('success');
 
-    // Force reflow to restart animation
     void toast.offsetWidth;
 
     if (isSuccess) {
@@ -296,6 +296,21 @@
         document.getElementById('emailOutput').value = email;
         emailList = snapshot.val() || [];
         updateCount();
+
+        const now = Date.now();
+        lastCopiedRef.set({ email, time: now });
+
+        setTimeout(() => {
+          lastCopiedRef.once('value').then(snap => {
+            const data = snap.val();
+            if (data && data.email === email) {
+              const delta = Math.abs(Date.now() - data.time);
+              if (delta < 1000) {
+                showToast("\u26a0\ufe0f Email \u0111\u00e3 b\u1ecb l\u1ea5y tr\u00f9ng b\u1edfi thi\u1ebft b\u1ecb kh\u00e1c!", true);
+              }
+            }
+          });
+        }, 300);
       }
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
