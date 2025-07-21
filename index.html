@@ -128,8 +128,7 @@
 <div id="toastContainer"></div>
 
 <script>
-// Your web app's Firebase configuration
-const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyCa3FEODGEirl4Vhl939tZmAQBI3AD92To",
   authDomain: "sync-mail-8860a.firebaseapp.com",
   databaseURL: "https://sync-mail-8860a-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -138,6 +137,7 @@ const firebaseConfig = {
   messagingSenderId: "861437887101",
   appId: "1:861437887101:web:ba43e479ed9907e4902714"
 };
+
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
@@ -156,13 +156,13 @@ const firebaseConfig = {
   }
 
   function updateCount() {
-    document.getElementById('count').textContent = 📊 Số email còn lại: ${emailList.length};
+    document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
   }
 
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        showToast(✅ Đã copy: ${text});
+        showToast(`✅ Đã copy: ${text}`);
       }).catch(() => fallbackCopy(text));
     } else {
       fallbackCopy(text);
@@ -179,7 +179,7 @@ const firebaseConfig = {
     textarea.select();
     try {
       const successful = document.execCommand('copy');
-      showToast(successful ? ✅ Đã copy: ${text} : '⚠️ Không thể copy.', !successful);
+      showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful);
     } catch {
       showToast('⚠️ Lỗi khi copy.', true);
     }
@@ -226,7 +226,7 @@ const firebaseConfig = {
         showToast('⚠️ Lỗi khi thêm email.', true);
       } else {
         const updatedList = snapshot.val() || [];
-        showToast(✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.);
+        showToast(`✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.`);
         document.getElementById('emailListInput').value = '';
         emailList = updatedList;
         updateCount();
@@ -257,35 +257,31 @@ const firebaseConfig = {
     copyText(email);
   });
 
+  // ✅ Sửa lại logic copy FIFO: lấy email đầu tiên
   document.getElementById('copyButton').addEventListener('click', () => {
     const btn = document.getElementById('copyButton');
     btn.disabled = true;
     btn.textContent = "⏳ Đang xử lý...";
-    if (emailList.length === 0) {
-      showToast('⚠️ Danh sách đã hết email.', true);
-      btn.disabled = false;
-      btn.textContent = "📋 Lấy & Copy Email";
-      document.getElementById('emailOutput').value = '';
-      return;
-    }
-    const randomIndex = Math.floor(Math.random() * emailList.length);
-    const email = emailList[randomIndex];
-    copyText(email);
+
     emailRef.transaction(list => {
-      if (!list) return null;
-      const idx = list.indexOf(email);
-      if (idx !== -1) list.splice(idx, 1);
+      if (!Array.isArray(list) || list.length === 0) return list;
+      const email = list[0]; // FIFO: lấy phần tử đầu
+      list.shift();          // xóa email đầu
+      selectedEmail = email;
       return list;
     }, (error, committed, snapshot) => {
       btn.disabled = false;
       btn.textContent = "📋 Lấy & Copy Email";
-      if (committed) {
-        document.getElementById('emailOutput').value = email;
-        emailList = snapshot.val() || [];
-        updateCount();
-      } else if (error) {
-        showToast("⚠️ Lỗi khi xóa email.", true);
+
+      if (error || !committed || !selectedEmail) {
+        showToast("⚠️ Không thể lấy email.", true);
+        return;
       }
+
+      document.getElementById('emailOutput').value = selectedEmail;
+      copyText(selectedEmail);
+      emailList = snapshot.val() || [];
+      updateCount();
     });
   });
 </script>
