@@ -15,11 +15,6 @@
       align-items: center;
       padding: 20px;
       color: #121212;
-      transition: background 0.5s, color 0.5s;
-    }
-    body.dark-mode {
-      background: #121212;
-      color: #f0f0f0;
     }
     textarea, input, button {
       font-size: 16px;
@@ -31,13 +26,6 @@
       border: 1px solid #ccc;
       background: #fff;
       color: #121212;
-      transition: background 0.5s, color 0.5s;
-    }
-    body.dark-mode textarea,
-    body.dark-mode input {
-      background: #1e1e1e;
-      color: #f0f0f0;
-      border: 1px solid #444;
     }
     button {
       background: #007bff;
@@ -49,6 +37,18 @@
     }
     button:hover {
       background: #0056b3;
+    }
+    .input-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      width: 90%;
+      max-width: 340px;
+      margin-top: 10px;
+    }
+    #manualCopyButton {
+      max-width: 60px;
+      padding: 10px;
     }
     #deleteListButton {
       background: #dc3545;
@@ -66,18 +66,6 @@
     }
     #copyButton:hover {
       background: #0056b3;
-    }
-    .input-container {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      width: 90%;
-      max-width: 340px;
-      margin-top: 10px;
-    }
-    #manualCopyButton {
-      max-width: 60px;
-      padding: 10px;
     }
     #toastContainer {
       position: fixed;
@@ -140,16 +128,15 @@
 <div id="toastContainer"></div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAdejqCksTTv5Nj7M1ZVOLzjX_tZdb_MMk",
-  authDomain: "sync-mail-tool-1da43.firebaseapp.com",
-  databaseURL: "https://sync-mail-tool-1da43-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sync-mail-tool-1da43",
-  storageBucket: "sync-mail-tool-1da43.appspot.com", // ✅ sửa đúng tên
-  messagingSenderId: "595630346441",
-  appId: "1:595630346441:web:b3cd7c83156e07141f7d18"
+const firebaseConfig = { 
+  apiKey : "AIzaSyAdejqCksTTv5Nj7M1ZVOLzjX_tZdb_MMk" , 
+  authDomain : "sync-mail-tool-1da43.firebaseapp.com" , 
+  databaseURL : "https://sync-mail-tool-1da43-default-rtdb.asia-southeast1.firebasedatabase.app" , 
+  projectId : "sync-mail-tool-1da43" , 
+  storageBucket : "sync-mail-tool-1da43.firebasestorage.app" , 
+  messagingSenderId : "595630346441" , 
+  appId : "1:595630346441:web:b3cd7c83156e07141f7d18" 
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
@@ -174,6 +161,7 @@ function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
       showToast(`✅ Đã copy: ${text}`);
+      enableDarkModeFor10Seconds();
     }).catch(() => fallbackCopy(text));
   } else {
     fallbackCopy(text);
@@ -191,6 +179,7 @@ function fallbackCopy(text) {
   try {
     const successful = document.execCommand('copy');
     showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful);
+    enableDarkModeFor10Seconds();
   } catch {
     showToast('⚠️ Lỗi khi copy.', true);
   }
@@ -213,15 +202,6 @@ function showToast(message = "✅ Email đã được Copy !!!", isError = false
   }, 5000);
 }
 
-// Dark Mode auto toggle
-function activateDarkModeFor10Seconds() {
-  document.body.classList.add('dark-mode');
-  setTimeout(() => {
-    document.body.classList.remove('dark-mode');
-  }, 10000);
-}
-
-// Load email list
 emailRef.on('value', snapshot => {
   const data = snapshot.val();
   emailList = data ? data : [];
@@ -288,12 +268,9 @@ document.getElementById('copyButton').addEventListener('click', () => {
     document.getElementById('emailOutput').value = '';
     return;
   }
-
   const randomIndex = Math.floor(Math.random() * emailList.length);
   const email = emailList[randomIndex];
   copyText(email);
-  activateDarkModeFor10Seconds();
-
   emailRef.transaction(list => {
     if (!list) return null;
     const idx = list.indexOf(email);
@@ -311,6 +288,31 @@ document.getElementById('copyButton').addEventListener('click', () => {
     }
   });
 });
+
+function enableDarkModeFor10Seconds() {
+  const originalStyles = {
+    background: document.body.style.background,
+    color: document.body.style.color
+  };
+  document.body.style.background = "#121212";
+  document.body.style.color = "#ffffff";
+  const inputs = document.querySelectorAll("textarea, input, button");
+  inputs.forEach(el => {
+    el.style.background = "#2c2c2c";
+    el.style.color = "#ffffff";
+    el.style.border = "1px solid #444";
+  });
+
+  setTimeout(() => {
+    document.body.style.background = originalStyles.background || "#f0f2f5";
+    document.body.style.color = originalStyles.color || "#121212";
+    inputs.forEach(el => {
+      el.style.background = "#fff";
+      el.style.color = "#121212";
+      el.style.border = "1px solid #ccc";
+    });
+  }, 10000);
+}
 </script>
 
 </body>
