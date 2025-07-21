@@ -1,3 +1,7 @@
+<!-- ✅ KHÔNG chứa bất kỳ hiệu ứng dark mode nào -->
+<!-- ✅ KHÔNG chứa nút dark mode -->
+<!-- ✅ Giữ nguyên toàn bộ chức năng toast + Firebase + copy -->
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,7 +18,7 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      transition: background 0.4s;
+      color: #121212;
     }
     textarea, input, button {
       font-size: 16px;
@@ -24,14 +28,16 @@
       padding: 12px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      box-sizing: border-box;
+      background: #fff;
+      color: #121212;
     }
     button {
       background: #007bff;
       color: white;
       border: none;
       cursor: pointer;
-      transition: background 0.3s;
+      margin-top: 5px;
+      border-radius: 8px;
     }
     button:hover {
       background: #0056b3;
@@ -55,17 +61,16 @@
       background: #a71d2a;
     }
     #copyButton {
-      font-size: 20px;
+      font-size: 18px;
       padding: 18px;
       width: 95%;
       max-width: 380px;
-      margin-top: 30px;
-      background: #28a745;
+      background: #007bff;
+      border-radius: 8px;
     }
     #copyButton:hover {
-      background: #1c7c31;
+      background: #0056b3;
     }
-
     #toastContainer {
       position: fixed;
       top: 10px;
@@ -105,24 +110,28 @@
 </head>
 <body>
 
-<h3>📨 Quản lý danh sách Email Online (Tự Lọc & Lưu)</h3>
+<h3 style="text-align: center; width: 90%; max-width: 340px;">
+  📨 Quản lý danh sách Email Online<br />
+  <small style="font-weight: normal; font-size: 0.7em;">(Tự Lọc & Lưu)</small>
+</h3>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
 <button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
 
 <div class="input-container">
-  <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly>
+  <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly />
   <button id="manualCopyButton">📋</button>
 </div>
 
 <p id="count"></p>
+<p id="output"></p>
+
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
 <div id="toastContainer"></div>
 
 <script>
-  // === Firebase Config ===
   const firebaseConfig = {
     apiKey: "AIzaSyDtGVPiYkReMgEDSbp0zF1Mn0rS4XlCu70",
     authDomain: "sync-email-tool.firebaseapp.com",
@@ -137,23 +146,6 @@
   const db = firebase.database();
   const emailRef = db.ref('emails');
   let emailList = [];
-
-  // Toast function
-  let currentToast = null;
-  function showToast(message = "✅ Email đã được Copy !!!", isError = false) {
-    const container = document.getElementById("toastContainer");
-    if (currentToast) container.removeChild(currentToast);
-    const toast = document.createElement("div");
-    toast.classList.add("toast");
-    if (isError) toast.classList.add("error");
-    toast.textContent = message;
-    container.appendChild(toast);
-    currentToast = toast;
-    setTimeout(() => {
-      if (toast.parentNode) container.removeChild(toast);
-      if (currentToast === toast) currentToast = null;
-    }, 5000);
-  }
 
   function extractEmails(text) {
     const parts = text.split(/[\s,;|]+/);
@@ -175,7 +167,9 @@
       navigator.clipboard.writeText(text).then(() => {
         showToast(`✅ Đã copy: ${text}`);
       }).catch(() => fallbackCopy(text));
-    } else fallbackCopy(text);
+    } else {
+      fallbackCopy(text);
+    }
   }
 
   function fallbackCopy(text) {
@@ -195,6 +189,22 @@
     document.body.removeChild(textarea);
   }
 
+  let currentToast = null;
+  function showToast(message = "✅ Email đã được Copy !!!", isError = false) {
+    const container = document.getElementById("toastContainer");
+    if (currentToast) container.removeChild(currentToast);
+    const toast = document.createElement("div");
+    toast.classList.add("toast");
+    if (isError) toast.classList.add("error");
+    toast.textContent = message;
+    container.appendChild(toast);
+    currentToast = toast;
+    setTimeout(() => {
+      if (toast.parentNode) container.removeChild(toast);
+      if (currentToast === toast) currentToast = null;
+    }, 5000);
+  }
+
   emailRef.on('value', snapshot => {
     const data = snapshot.val();
     emailList = data ? data : [];
@@ -203,23 +213,23 @@
 
   document.getElementById('addListButton').addEventListener('click', () => {
     const input = document.getElementById('emailListInput').value.trim();
-    const filteredEmails = extractEmails(input);
-    if (filteredEmails.length === 0) {
+    const filtered = extractEmails(input);
+    if (filtered.length === 0) {
       showToast('⚠️ Không có email hợp lệ để thêm.', true);
       return;
     }
     emailRef.transaction(currentList => {
-      const updatedList = currentList ? currentList.slice() : [];
-      filteredEmails.forEach(email => {
-        if (!updatedList.includes(email)) updatedList.push(email);
+      const updated = currentList ? currentList.slice() : [];
+      filtered.forEach(email => {
+        if (!updated.includes(email)) updated.push(email);
       });
-      return updatedList;
+      return updated;
     }, (error, committed, snapshot) => {
       if (error || !committed) {
         showToast('⚠️ Lỗi khi thêm email.', true);
       } else {
         const updatedList = snapshot.val() || [];
-        showToast(`✅ Đã thêm ${filteredEmails.length} email hợp lệ, tổng: ${updatedList.length}.`);
+        showToast(`✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.`);
         document.getElementById('emailListInput').value = '';
         emailList = updatedList;
         updateCount();
@@ -229,7 +239,7 @@
 
   document.getElementById('deleteListButton').addEventListener('click', () => {
     if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
-    emailRef.set([], (error) => {
+    emailRef.set([], error => {
       if (error) {
         showToast('⚠️ Lỗi khi xóa danh sách.', true);
       } else {
@@ -244,7 +254,7 @@
   document.getElementById('manualCopyButton').addEventListener('click', () => {
     const email = document.getElementById('emailOutput').value;
     if (!email) {
-      showToast('⚠️ Không có email để copy.', true);
+      showToast("⚠️ Không có email để copy.", true);
       return;
     }
     copyText(email);
@@ -254,36 +264,31 @@
     const btn = document.getElementById('copyButton');
     btn.disabled = true;
     btn.textContent = "⏳ Đang xử lý...";
-    document.body.style.background = "#17a2b8";
-
     if (emailList.length === 0) {
-      showToast('✅ Danh sách đã hết email.');
+      showToast('⚠️ Danh sách đã hết email.', true);
       btn.disabled = false;
       btn.textContent = "📋 Lấy & Copy Email";
-      document.body.style.background = "#f0f2f5";
+      document.getElementById('emailOutput').value = '';
       return;
     }
-
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const email = emailList[randomIndex];
     copyText(email);
-
-    emailRef.transaction(currentList => {
-      if (!currentList) return null;
-      const idx = currentList.indexOf(email);
-      if (idx !== -1) currentList.splice(idx, 1);
-      return currentList;
+    emailRef.transaction(list => {
+      if (!list) return null;
+      const idx = list.indexOf(email);
+      if (idx !== -1) list.splice(idx, 1);
+      return list;
     }, (error, committed, snapshot) => {
       btn.disabled = false;
       btn.textContent = "📋 Lấy & Copy Email";
-      document.body.style.background = "#f0f2f5";
-      if (error || !committed) {
-        showToast('⚠️ Lỗi khi xóa email.', true);
-        return;
+      if (committed) {
+        document.getElementById('emailOutput').value = email;
+        emailList = snapshot.val() || [];
+        updateCount();
+      } else if (error) {
+        showToast("⚠️ Lỗi khi xóa email.", true);
       }
-      document.getElementById('emailOutput').value = email;
-      emailList = snapshot.val() || [];
-      updateCount();
     });
   });
 </script>
