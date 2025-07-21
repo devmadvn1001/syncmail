@@ -14,7 +14,6 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      transition: background 0.5s, color 0.5s;
     }
     textarea, input, button {
       font-size: 16px;
@@ -36,6 +35,18 @@
     button:hover {
       background: #0056b3;
     }
+    .input-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      width: 90%;
+      max-width: 340px;
+      margin-top: 10px;
+    }
+    #manualCopyButton {
+      max-width: 60px;
+      padding: 10px;
+    }
     #deleteListButton {
       background: #dc3545;
     }
@@ -53,62 +64,42 @@
     #copyButton:hover {
       background: #1c7c31;
     }
-    .input-container {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      width: 90%;
-      max-width: 340px;
-      margin-top: 10px;
-    }
-    #manualCopyButton {
-      max-width: 60px;
-      padding: 10px;
-    }
 
-    /* 🔥 Dark mode toggle (tự động bật 10s khi copy) */
-    body.dark {
-      background: #121212;
-      color: #f5f5f5;
-    }
-    body.dark textarea,
-    body.dark input {
-      background: #1e1e1e;
-      color: #f5f5f5;
-      border-color: #444;
-    }
-    body.dark button {
-      background: #333;
-    }
-    body.dark #copyButton {
-      background: #1c7c31;
-    }
-
-    /* ✅ Toast */
-    #toast {
+    /* 🔔 TOAST STYLE */
+    #customToast {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 15px;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.5s ease;
+      top: -120px;
+      left: 0;
+      width: 100%;
+      background-color: #343a40;
+      color: white;
+      text-align: center;
+      padding: 16px 10px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       z-index: 9999;
+      transition: top 0.5s ease-in-out;
     }
-    #toast.show {
-      opacity: 1;
-      bottom: 50px;
+    #customToast.show {
+      top: 0;
+    }
+    #customToast span {
+      display: block;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
 
+<!-- 🔔 TOAST -->
+<div id="customToast">
+  <span>📨 Quản lý danh sách Email Online</span>
+  <span>(Tự Lọc & Lưu)</span>
+</div>
+
 <h3>📨 Quản lý danh sách Email Online (Tự Lọc & Lưu)</h3>
+
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
 <button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
@@ -120,14 +111,11 @@
 
 <p id="count"></p>
 <p id="output"></p>
+
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
-<!-- ✅ Toast element -->
-<div id="toast"></div>
-
 <script>
-  // Firebase config
-const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyCWgaqjvmSetE-lVVxLDdzLj5x3lXMbEAU",
   authDomain: "sync-mail-tool-11b23.firebaseapp.com",
   databaseURL: "https://sync-mail-tool-11b23-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -136,7 +124,6 @@ const firebaseConfig = {
   messagingSenderId: "681653464599",
   appId: "1:681653464599:web:bb9fbf8e9ed837d275f652"
 };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const emailRef = db.ref('emails');
@@ -160,22 +147,19 @@ const firebaseConfig = {
     document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
   }
 
-  // ✅ Toast hiệu ứng thông báo
-  function showToast(message) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
+  function showToast() {
+    const toast = document.getElementById('customToast');
     toast.classList.add('show');
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 2500);
+    }, 3000);
   }
 
-  // ✅ Copy text
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        showToast(`✅ Đã copy: ${text}`);
-        enableDarkMode();
+        document.getElementById('output').textContent = `✅ Đã copy: ${text}`;
+        showToast();
       }).catch(() => fallbackCopy(text));
     } else fallbackCopy(text);
   }
@@ -190,23 +174,14 @@ const firebaseConfig = {
     textarea.select();
     try {
       const successful = document.execCommand('copy');
-      showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.');
-      if (successful) enableDarkMode();
+      document.getElementById('output').textContent = successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.';
+      if (successful) showToast();
     } catch {
-      showToast('⚠️ Lỗi khi copy.');
+      document.getElementById('output').textContent = '⚠️ Lỗi khi copy.';
     }
     document.body.removeChild(textarea);
   }
 
-  // ✅ Tự bật dark mode 10s khi copy
-  function enableDarkMode() {
-    document.body.classList.add('dark');
-    setTimeout(() => {
-      document.body.classList.remove('dark');
-    }, 10000);
-  }
-
-  // Load danh sách email realtime
   emailRef.on('value', snapshot => {
     const data = snapshot.val();
     emailList = data ? data : [];
@@ -217,7 +192,7 @@ const firebaseConfig = {
     const input = document.getElementById('emailListInput').value.trim();
     const filteredEmails = extractEmails(input);
     if (filteredEmails.length === 0) {
-      showToast('⚠️ Không có email hợp lệ để thêm.');
+      document.getElementById('output').textContent = '⚠️ Không có email hợp lệ để thêm.';
       return;
     }
     emailRef.transaction(currentList => {
@@ -229,11 +204,13 @@ const firebaseConfig = {
       });
       return updatedList;
     }, (error, committed, snapshot) => {
-      if (error || !committed) {
-        showToast('⚠️ Lỗi khi thêm email.');
+      if (error) {
+        document.getElementById('output').textContent = '⚠️ Lỗi khi thêm email.';
+      } else if (!committed) {
+        document.getElementById('output').textContent = '⚠️ Không thể thêm email.';
       } else {
         const updatedList = snapshot.val() ? snapshot.val() : [];
-        showToast(`✅ Đã thêm ${filteredEmails.length} email hợp lệ.`);
+        document.getElementById('output').textContent = `✅ Đã thêm ${filteredEmails.length} email hợp lệ, tổng: ${updatedList.length}.`;
         document.getElementById('emailListInput').value = '';
         emailList = updatedList;
         updateCount();
@@ -245,9 +222,9 @@ const firebaseConfig = {
     if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
     emailRef.set([], (error) => {
       if (error) {
-        showToast('⚠️ Lỗi khi xóa danh sách.');
+        document.getElementById('output').textContent = '⚠️ Lỗi khi xóa danh sách.';
       } else {
-        showToast('✅ Đã xóa toàn bộ danh sách email.');
+        document.getElementById('output').textContent = '✅ Đã xóa toàn bộ danh sách email.';
         emailList = [];
         updateCount();
       }
@@ -257,7 +234,7 @@ const firebaseConfig = {
   document.getElementById('manualCopyButton').addEventListener('click', () => {
     const email = document.getElementById('emailOutput').value;
     if (!email) {
-      showToast('⚠️ Không có email để copy.');
+      document.getElementById('output').textContent = '⚠️ Không có email để copy.';
       return;
     }
     copyText(email);
@@ -269,7 +246,7 @@ const firebaseConfig = {
     copyButton.textContent = "⏳ Đang xử lý...";
 
     if (emailList.length === 0) {
-      showToast('✅ Danh sách đã hết email.');
+      document.getElementById('output').textContent = '✅ Danh sách đã hết email.';
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
       return;
@@ -287,7 +264,9 @@ const firebaseConfig = {
       }
       return currentList;
     }, (error, committed, snapshot) => {
-      if (committed) {
+      if (error) {
+        document.getElementById('output').textContent = '⚠️ Lỗi khi xóa email.';
+      } else if (committed) {
         document.getElementById('emailOutput').value = email;
         emailList = snapshot.val() || [];
         updateCount();
