@@ -263,25 +263,19 @@
     copyButton.disabled = true;
     copyButton.textContent = "⏳ Đang xử lý...";
 
+    let selectedEmail = null;
+
     emailRef.transaction(currentList => {
       if (!currentList || currentList.length === 0) return null;
-
       const randomIndex = Math.floor(Math.random() * currentList.length);
-      const selectedEmail = currentList[randomIndex];
+      selectedEmail = currentList[randomIndex];
       currentList.splice(randomIndex, 1);
-      emailRef.selectedEmail = selectedEmail;
       return currentList;
     }, (error, committed, snapshot) => {
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
 
-      if (error || !committed) {
-        showToast('⚠️ Lỗi khi lấy hoặc xóa email.', true);
-        return;
-      }
-
-      const selectedEmail = emailRef.selectedEmail;
-      if (!selectedEmail) {
+      if (error || !committed || !selectedEmail) {
         showToast('⚠️ Không còn email để copy.', true);
         return;
       }
