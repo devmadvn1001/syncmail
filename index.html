@@ -81,38 +81,6 @@ button:hover {
 #copyButton:hover {
   background: #0056b3;
 }
-
-/* Dark mode toggle với khung viền và kích thước bằng nút Copy */
-#darkModeToggle {
-  margin: 15px 0 0;
-  cursor: pointer;
-  font-size: 18px;
-  user-select: none;
-  color: #007bff;
-  background: transparent;
-  border: 2px solid #007bff;
-  border-radius: 8px;
-  padding: 18px;
-  width: 95%;
-  max-width: 380px;
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-  box-sizing: border-box;
-  text-align: center;
-}
-#darkModeToggle:hover {
-  background-color: #007bff;
-  color: #fff;
-}
-body.dark #darkModeToggle {
-  color: #90caf9;
-  border-color: #90caf9;
-}
-body.dark #darkModeToggle:hover {
-  background-color: #90caf9;
-  color: #121212;
-}
-
-/* Toast container & toast style */
 #toastContainer {
   position: fixed;
   top: 10px;
@@ -142,12 +110,9 @@ body.dark #darkModeToggle:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* Toast cảnh báo lỗi đỏ */
 .toast.error {
   background: rgba(220, 53, 69, 0.95);
 }
-
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -180,13 +145,11 @@ body.dark #darkModeToggle:hover {
 <p id="output"></p>
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
-<button id="darkModeToggle">🌙 Bật / Tắt Dark Mode</button>
 
-<!-- Toast container -->
 <div id="toastContainer"></div>
 
 <script>
-// === Firebase Config ===
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
   authDomain: "email-sync-tool-96986.firebaseapp.com",
@@ -200,12 +163,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
-const darkModeRef = db.ref('darkModeEnabled');
 
 let emailList = [];
-let darkModeEnabled = false;
 
-// Hàm tách email chuẩn
+// Tách email chuẩn
 function extractEmails(text) {
   const separators = /[\s,;|]+/;
   const parts = text.split(separators);
@@ -228,9 +189,11 @@ function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
       showToast(`✅ Đã copy: ${text}`);
+      enableDarkMode(); // 👉 bật darkmode
     }).catch(() => fallbackCopy(text));
   } else fallbackCopy(text);
 }
+
 function fallbackCopy(text) {
   const textarea = document.createElement("textarea");
   textarea.value = text;
@@ -243,6 +206,7 @@ function fallbackCopy(text) {
     const successful = document.execCommand('copy');
     if(successful) {
       showToast(`✅ Đã copy: ${text}`);
+      enableDarkMode(); // 👉 bật darkmode
     } else {
       showToast('⚠️ Không thể copy.', true);
     }
@@ -255,14 +219,10 @@ function fallbackCopy(text) {
 let currentToast = null;
 function showToast(message = "✅ Email đã được Copy !!!", isError = false) {
   const container = document.getElementById("toastContainer");
-
-  // Nếu có toast cũ, xóa ngay lập tức
   if (currentToast) {
     container.removeChild(currentToast);
     currentToast = null;
   }
-
-  // Tạo toast mới
   const toast = document.createElement("div");
   toast.classList.add("toast");
   if (isError) toast.classList.add("error");
@@ -270,7 +230,6 @@ function showToast(message = "✅ Email đã được Copy !!!", isError = false
   container.appendChild(toast);
   currentToast = toast;
 
-  // Tự động xóa toast sau 5 giây
   setTimeout(() => {
     if (toast.parentNode) {
       container.removeChild(toast);
@@ -279,6 +238,20 @@ function showToast(message = "✅ Email đã được Copy !!!", isError = false
   }, 5000);
 }
 
+// Bật darkmode + lưu local
+function enableDarkMode() {
+  if (!document.body.classList.contains('dark')) {
+    document.body.classList.add('dark');
+    localStorage.setItem('darkMode', 'true');
+  }
+}
+
+// Load darkmode nếu đã lưu
+(function () {
+  const isDark = localStorage.getItem('darkMode') === 'true';
+  if (isDark) document.body.classList.add('dark');
+})();
+
 // Load danh sách mail realtime
 emailRef.on('value', snapshot => {
   const data = snapshot.val();
@@ -286,30 +259,7 @@ emailRef.on('value', snapshot => {
   updateCount();
 });
 
-// Load dark mode realtime
-darkModeRef.on('value', snapshot => {
-  darkModeEnabled = snapshot.val() === true;
-  setDarkMode(darkModeEnabled, false);
-});
-
-// Hàm bật tắt dark mode, cập nhật database nếu needUpdate = true
-function setDarkMode(enabled, needUpdate = true) {
-  if (enabled) {
-    document.body.classList.add('dark');
-  } else {
-    document.body.classList.remove('dark');
-  }
-  // Cập nhật nút text
-  document.getElementById('darkModeToggle').textContent = enabled ? '☀️ Tắt Dark Mode' : '🌙 Bật Dark Mode';
-
-  if (needUpdate) {
-    darkModeRef.set(enabled).catch(() => {
-      showToast('⚠️ Lỗi cập nhật Dark Mode.', true);
-    });
-  }
-}
-
-// Thêm danh sách mail đã lọc
+// Thêm danh sách mail
 document.getElementById('addListButton').addEventListener('click', () => {
   const input = document.getElementById('emailListInput').value.trim();
   const filteredEmails = extractEmails(input);
@@ -340,7 +290,7 @@ document.getElementById('addListButton').addEventListener('click', () => {
   });
 });
 
-// Xóa toàn bộ danh sách
+// Xóa danh sách
 document.getElementById('deleteListButton').addEventListener('click', () => {
   if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
   emailRef.set([], (error) => {
@@ -365,7 +315,7 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   copyText(email);
 });
 
-// Lấy & Copy 1 email + xóa với đổi nút
+// Lấy & Copy + xóa
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
@@ -402,11 +352,6 @@ document.getElementById('copyButton').addEventListener('click', () => {
       showToast("⚠️ Lỗi khi xóa email.", true);
     }
   });
-});
-
-// Bật/tắt Dark Mode nút
-document.getElementById('darkModeToggle').addEventListener('click', () => {
-  setDarkMode(!darkModeEnabled, true);
 });
 </script>
 
