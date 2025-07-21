@@ -20,7 +20,8 @@
       background: #fff3cd !important;
     }
     body.duplicate-mode {
-      background: #f8d7da !important;
+      background: #c82333 !important; /* đỏ đậm hơn */
+      color: white;
     }
     textarea, input, button {
       font-size: 16px;
@@ -65,7 +66,7 @@
       padding: 18px;
       width: 95%;
       max-width: 380px;
-      margin-top: 10px; /* Đưa nút này gần nút Clear Log */
+      margin-top: 10px;
       background: #28a745;
     }
     #copyButton:hover {
@@ -186,7 +187,7 @@ function updateCount() {
   document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
 }
 
-function showToast(msg, isError = false, isSuccess = false, isWarning = false, duration = 10000) {
+function showToast(msg, isError = false, isSuccess = false, isWarning = false, duration = 10000, persistent = false) {
   const toast = document.getElementById('customToast');
   toast.textContent = msg;
   toast.className = '';
@@ -201,9 +202,15 @@ function showToast(msg, isError = false, isSuccess = false, isWarning = false, d
     setTimeout(() => document.body.classList.remove('dark-mode'), duration);
   }
 
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, duration);
+  if (!persistent) {
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, duration);
+  }
+}
+
+function hideToast() {
+  document.getElementById('customToast').classList.remove('show');
 }
 
 function copyText(text) {
@@ -287,12 +294,8 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   copyText(email);
 });
 
-let lastCopyTimestamp = 0;
-let checkDupTimeout = null;
-
 function onCopyEmail(email) {
   const now = Date.now();
-  lastCopyTimestamp = now;
   const logKey = now + '_' + deviceId;
   copyLogsRef.child(logKey).set({ email, time: now, deviceId });
 
@@ -307,17 +310,15 @@ function onCopyEmail(email) {
       }
     }
     if (trùng) {
-      document.body.classList.add('duplicate-mode'); // giữ màu đỏ vĩnh viễn
-      showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, true);
+      document.body.classList.add('duplicate-mode');
+      showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, true, false, false, 0, true);
     }
   });
-
-  if (checkDupTimeout) clearTimeout(checkDupTimeout);
-  checkDupTimeout = setTimeout(() => {}, 15000);
 }
 
 document.getElementById('copyButton').addEventListener('click', () => {
-  document.body.classList.remove('duplicate-mode'); // reset màu đỏ
+  document.body.classList.remove('duplicate-mode'); // reset đỏ
+  hideToast(); // reset thông báo
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
   copyButton.textContent = "⏳ Đang xử lý...";
