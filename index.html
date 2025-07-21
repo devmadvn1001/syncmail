@@ -172,23 +172,27 @@
 
     void toast.offsetWidth;
 
+    if (isSuccess) {
+      document.body.classList.add('dark-mode');
+      setTimeout(() => {
+        document.body.classList.remove('dark-mode');
+      }, 10000);
+    }
+
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 5000);
+    }, 10000);
   }
 
-  function copyText(text, callback) {
+  function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
         showToast(`✅ Đã copy: ${text}`, false, true);
-        callback(true);
-      }).catch(() => {
-        fallbackCopy(text, callback);
-      });
-    } else fallbackCopy(text, callback);
+      }).catch(() => fallbackCopy(text));
+    } else fallbackCopy(text);
   }
 
-  function fallbackCopy(text, callback) {
+  function fallbackCopy(text) {
     const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.style.position = "fixed";
@@ -199,10 +203,8 @@
     try {
       const successful = document.execCommand('copy');
       showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
-      callback(successful);
     } catch {
       showToast('⚠️ Lỗi khi copy.', true);
-      callback(false);
     }
     document.body.removeChild(textarea);
   }
@@ -260,46 +262,55 @@
       showToast('⚠️ Không có email để copy.', true);
       return;
     }
-    copyText(email, () => {});
+    copyText(email);
   });
 
   document.getElementById('copyButton').addEventListener('click', () => {
     const copyButton = document.getElementById('copyButton');
     copyButton.disabled = true;
-    copyButton.textContent = "⏳ Đang xử lý...";
 
-    emailRef.transaction(currentList => {
-      if (!currentList || currentList.length === 0) return null;
-      const randomIndex = Math.floor(Math.random() * currentList.length);
-      const selectedEmail = currentList[randomIndex];
-      currentList.splice(randomIndex, 1);
-      return currentList;
-    }, (error, committed, snapshot) => {
+    if (emailList.length === 0) {
+      showToast('⚠️ Danh sách đã hết email.', true);
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
+      return;
+    }
 
-      if (error || !committed || !snapshot) {
-        showToast('⚠️ Không còn email để copy.', true);
-        return;
+    let countdown = 5;
+    copyButton.textContent = `⏳ Đang xử lý... (${countdown})`;
+
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        copyButton.textContent = `⏳ Đang xử lý... (${countdown})`;
+      } else {
+        clearInterval(countdownInterval);
+
+        const randomIndex = Math.floor(Math.random() * emailList.length);
+        const email = emailList[randomIndex];
+
+        copyText(email);
+
+        emailRef.transaction(currentList => {
+          if (!currentList) return null;
+          const idx = currentList.indexOf(email);
+          if (idx !== -1) {
+            currentList.splice(idx, 1);
+          }
+          return currentList;
+        }, (error, committed, snapshot) => {
+          if (error) {
+            showToast('⚠️ Lỗi khi xóa email.', true);
+          } else if (committed) {
+            document.getElementById('emailOutput').value = email;
+            emailList = snapshot.val() || [];
+            updateCount();
+          }
+          copyButton.disabled = false;
+          copyButton.textContent = "📋 Lấy & Copy Email";
+        });
       }
-
-      const oldList = snapshot.val();
-      const usedEmail = emailList.find(e => !oldList.includes(e));
-
-      if (!usedEmail) {
-        showToast('⚠️ Không tìm thấy email mới.', true);
-        return;
-      }
-
-      document.getElementById('emailOutput').value = usedEmail;
-      emailList = oldList || [];
-      updateCount();
-      copyText(usedEmail, success => {
-        if (!success) {
-          showToast('⚠️ Không thể copy.', true);
-        }
-      });
-    });
+    }, 1000);
   });
 </script>
 </body>
