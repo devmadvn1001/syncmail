@@ -143,7 +143,14 @@
   const db = firebase.database();
   const emailRef = db.ref('emails');
   const lastCopiedRef = db.ref('lastCopied');
+
   let emailList = [];
+
+  let deviceId = localStorage.getItem('deviceId');
+  if (!deviceId) {
+    deviceId = 'dev_' + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem('deviceId', deviceId);
+  }
 
   function extractEmails(text) {
     const separators = /[\s,;|]+/;
@@ -298,16 +305,18 @@
         updateCount();
 
         const now = Date.now();
-        lastCopiedRef.set({ email, time: now });
+        lastCopiedRef.set({ email, time: now, deviceId });
 
         setTimeout(() => {
           lastCopiedRef.once('value').then(snap => {
             const data = snap.val();
-            if (data && data.email === email) {
-              const delta = Math.abs(Date.now() - data.time);
-              if (delta < 1000) {
-                showToast("\u26a0\ufe0f Email \u0111\u00e3 b\u1ecb l\u1ea5y tr\u00f9ng b\u1edfi thi\u1ebft b\u1ecb kh\u00e1c!", true);
-              }
+            if (
+              data &&
+              data.email === email &&
+              data.deviceId !== deviceId &&
+              Math.abs(Date.now() - data.time) < 1000
+            ) {
+              showToast("⚠️ Email đã bị lấy trùng bởi thiết bị khác!", true);
             }
           });
         }, 300);
