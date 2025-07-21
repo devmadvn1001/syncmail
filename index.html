@@ -142,15 +142,7 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const emailRef = db.ref('emails');
-  const lockRef = db.ref('copyLock');
   let emailList = [];
-
-  lockRef.on('value', snapshot => {
-    const isLocked = snapshot.val();
-    const copyBtn = document.getElementById('copyButton');
-    copyBtn.disabled = isLocked === true;
-    copyBtn.textContent = isLocked ? "🔒 Đang bị khoá..." : "📋 Lấy & Copy Email";
-  });
 
   function extractEmails(text) {
     const separators = /[\s,;|]+/;
@@ -173,10 +165,13 @@
   function showToast(msg, isError = false, isSuccess = false) {
     const toast = document.getElementById('customToast');
     toast.textContent = msg;
-    toast.className = '';
+    toast.className = ''; // reset class
     toast.classList.add('show');
     if (isError) toast.classList.add('error');
     else if (isSuccess) toast.classList.add('success');
+
+    // Force reflow to restart animation
+    void toast.offsetWidth;
 
     if (isSuccess) {
       document.body.classList.add('dark-mode');
@@ -271,7 +266,7 @@
     copyText(email);
   });
 
-  document.getElementById('copyButton').addEventListener('click', async () => {
+  document.getElementById('copyButton').addEventListener('click', () => {
     const copyButton = document.getElementById('copyButton');
     copyButton.disabled = true;
     copyButton.textContent = "⏳ Đang xử lý...";
@@ -281,15 +276,6 @@
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
       return;
-    }
-
-    try {
-      await lockRef.set(true); // Khóa các máy khác
-      setTimeout(() => {
-        lockRef.set(false); // Mở sau 0.2 giây
-      }, 100);
-    } catch (e) {
-      showToast("⚠️ Lỗi khi tạo khóa copy.", true);
     }
 
     const randomIndex = Math.floor(Math.random() * emailList.length);
@@ -311,6 +297,8 @@
         emailList = snapshot.val() || [];
         updateCount();
       }
+      copyButton.disabled = false;
+      copyButton.textContent = "📋 Lấy & Copy Email";
     });
   });
 </script>
