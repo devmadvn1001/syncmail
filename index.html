@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quản lý Email Online - Random Copy Safe</title>
+  <title>Quản lý Email Online - Auto Filter</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <style>
@@ -108,7 +108,7 @@
 
 <h3 style="text-align: center; width: 90%; max-width: 340px;">
   📨 Quản lý danh sách Email Online<br />
-  <small style="font-weight: normal; font-size: 0.7em;">(Random an toàn nhiều thiết bị)</small>
+  <small style="font-weight: normal; font-size: 0.7em;">(Tự Lọc & Lưu)</small>
 </h3>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
@@ -128,15 +128,28 @@
 <div id="toastContainer"></div>
 
 <script>
+
+
+
+
+  
 const firebaseConfig = {
-  apiKey: "AIzaSyD54oSLJs4qdBPsuMLYupU2GCEhyWikpKY",
-  authDomain: "sync-mail-tool.firebaseapp.com",
-  databaseURL: "https://sync-mail-tool-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sync-mail-tool",
-  storageBucket: "sync-mail-tool.firebasestorage.app",
-  messagingSenderId: "663578380217",
-  appId: "1:663578380217:web:9d6d1c9a90f76a56355868"
+  apiKey: "AIzaSyCI4UnHqeX-w5HEJ4DK0g9aXpUYtWT55os",
+  authDomain: "sync-mail-tool-5906e.firebaseapp.com",
+  databaseURL: "https://sync-mail-tool-5906e-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sync-mail-tool-5906e",
+  storageBucket: "sync-mail-tool-5906e.firebasestorage.app",
+  messagingSenderId: "670302390100",
+  appId: "1:670302390100:web:38271b8066af6d3f862ac1"
 };
+
+
+
+
+
+
+
+  
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
@@ -155,13 +168,13 @@ const firebaseConfig = {
   }
 
   function updateCount() {
-    document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
+    document.getElementById('count').textContent = 📊 Số email còn lại: ${emailList.length};
   }
 
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        showToast(`✅ Đã copy: ${text}`);
+        showToast(✅ Đã copy: ${text});
       }).catch(() => fallbackCopy(text));
     } else {
       fallbackCopy(text);
@@ -178,7 +191,7 @@ const firebaseConfig = {
     textarea.select();
     try {
       const successful = document.execCommand('copy');
-      showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful);
+      showToast(successful ? ✅ Đã copy: ${text} : '⚠️ Không thể copy.', !successful);
     } catch {
       showToast('⚠️ Lỗi khi copy.', true);
     }
@@ -225,7 +238,7 @@ const firebaseConfig = {
         showToast('⚠️ Lỗi khi thêm email.', true);
       } else {
         const updatedList = snapshot.val() || [];
-        showToast(`✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.`);
+        showToast(✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.);
         document.getElementById('emailListInput').value = '';
         emailList = updatedList;
         updateCount();
@@ -256,33 +269,35 @@ const firebaseConfig = {
     copyText(email);
   });
 
-  // ✅ Sửa: Random & xóa trong transaction
   document.getElementById('copyButton').addEventListener('click', () => {
     const btn = document.getElementById('copyButton');
     btn.disabled = true;
     btn.textContent = "⏳ Đang xử lý...";
-
-    let selectedEmail = null;
-
+    if (emailList.length === 0) {
+      showToast('⚠️ Danh sách đã hết email.', true);
+      btn.disabled = false;
+      btn.textContent = "📋 Lấy & Copy Email";
+      document.getElementById('emailOutput').value = '';
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * emailList.length);
+    const email = emailList[randomIndex];
+    copyText(email);
     emailRef.transaction(list => {
-      if (!Array.isArray(list) || list.length === 0) return list;
-      const i = Math.floor(Math.random() * list.length);
-      selectedEmail = list[i];
-      list.splice(i, 1); // Xóa email đã chọn
+      if (!list) return null;
+      const idx = list.indexOf(email);
+      if (idx !== -1) list.splice(idx, 1);
       return list;
     }, (error, committed, snapshot) => {
       btn.disabled = false;
       btn.textContent = "📋 Lấy & Copy Email";
-
-      if (error || !committed || !selectedEmail) {
-        showToast("⚠️ Không thể lấy email.", true);
-        return;
+      if (committed) {
+        document.getElementById('emailOutput').value = email;
+        emailList = snapshot.val() || [];
+        updateCount();
+      } else if (error) {
+        showToast("⚠️ Lỗi khi xóa email.", true);
       }
-
-      document.getElementById('emailOutput').value = selectedEmail;
-      copyText(selectedEmail);
-      emailList = snapshot.val() || [];
-      updateCount();
     });
   });
 </script>
