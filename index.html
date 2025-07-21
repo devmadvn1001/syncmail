@@ -15,13 +15,14 @@
       align-items: center;
       padding: 20px;
       transition: background 0.5s, color 0.5s;
+      color: initial;
     }
     body.warning-mode {
       background: #fff3cd !important;
     }
     body.duplicate-mode {
-      background: #c82333 !important; /* đỏ đậm hơn */
-      color: white;
+      background: #a60000 !important; /* đỏ đậm hơn 30% */
+      color: black !important;
     }
     textarea, input, button {
       font-size: 16px;
@@ -317,8 +318,9 @@ function onCopyEmail(email) {
 }
 
 document.getElementById('copyButton').addEventListener('click', () => {
-  document.body.classList.remove('duplicate-mode'); // reset đỏ
-  hideToast(); // reset thông báo
+  document.body.classList.remove('duplicate-mode');
+  hideToast();
+
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
   copyButton.textContent = "⏳ Đang xử lý...";
@@ -357,7 +359,6 @@ document.getElementById('copyButton').addEventListener('click', () => {
 });
 
 document.getElementById('clearLogsButton').addEventListener('click', () => {
-  if (!confirm("Bạn có chắc muốn xóa toàn bộ log copy?")) return;
   copyLogsRef.set(null, (error) => {
     if (error) {
       showToast('⚠️ Lỗi khi xóa log copy.', true);
