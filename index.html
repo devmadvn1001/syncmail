@@ -66,7 +66,6 @@
       background: #1c7c31;
     }
 
-    /* 🔔 TOAST STYLE */
     #customToast {
       position: fixed;
       top: -100px;
@@ -89,7 +88,6 @@
       background-color: #d93025;
     }
 
-    /* 🌙 Dark mode */
     .dark-mode {
       background: #121212;
       color: white;
@@ -107,8 +105,6 @@
   </style>
 </head>
 <body>
-
-<!-- 🔔 TOAST -->
 <div id="customToast"></div>
 
 <h3 style="text-align: center; line-height: 1.4;">
@@ -168,11 +164,17 @@
     toast.textContent = msg;
     toast.classList.add('show');
     toast.classList.toggle('error', isError);
-    document.body.classList.add('dark-mode');
+
+    if (!isError) {
+      document.body.classList.add('dark-mode');
+      setTimeout(() => {
+        document.body.classList.remove('dark-mode');
+      }, 10000);
+    }
+
     setTimeout(() => {
       toast.classList.remove('show');
       toast.classList.remove('error');
-      document.body.classList.remove('dark-mode');
     }, 10000);
   }
 
