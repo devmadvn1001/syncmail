@@ -21,7 +21,7 @@
       background: #fff3cd !important;
     }
     body.duplicate-mode {
-      background: #a60000 !important; /* đỏ đậm hơn 30% */
+      background: #8b0000 !important; /* đỏ đậm hơn */
       color: black !important;
     }
     textarea, input, button {
@@ -164,6 +164,8 @@ const lastCopiedRef = db.ref('lastCopied');
 const copyLogsRef = db.ref('copyLogs');
 
 let emailList = [];
+let isDuplicateToast = false;
+
 let deviceId = localStorage.getItem('deviceId');
 if (!deviceId) {
   deviceId = 'dev_' + Math.random().toString(36).substring(2, 10);
@@ -198,20 +200,20 @@ function showToast(msg, isError = false, isSuccess = false, isWarning = false, d
   else if (isSuccess) toast.classList.add('success');
   else if (isWarning) toast.classList.add('warning');
 
-  if (isSuccess) {
-    document.body.classList.add('dark-mode');
-    setTimeout(() => document.body.classList.remove('dark-mode'), duration);
+  if (persistent) {
+    isDuplicateToast = true;
+    return; // không ẩn tự động
   }
 
-  if (!persistent) {
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, duration);
-  }
+  setTimeout(() => {
+    if (!isDuplicateToast) toast.classList.remove('show');
+  }, duration);
 }
 
 function hideToast() {
-  document.getElementById('customToast').classList.remove('show');
+  const toast = document.getElementById('customToast');
+  toast.classList.remove('show');
+  isDuplicateToast = false;
 }
 
 function copyText(text) {
@@ -320,7 +322,6 @@ function onCopyEmail(email) {
 document.getElementById('copyButton').addEventListener('click', () => {
   document.body.classList.remove('duplicate-mode');
   hideToast();
-
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
   copyButton.textContent = "⏳ Đang xử lý...";
@@ -370,3 +371,4 @@ document.getElementById('clearLogsButton').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
