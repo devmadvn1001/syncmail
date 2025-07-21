@@ -72,7 +72,7 @@
       width: 120px; 
       padding: 8px; 
       font-size: 14px; 
-      margin-top: 10px; 
+      margin-top: 6px; 
       background-color: #dc3545; 
       color: white; 
       border: none; 
@@ -139,16 +139,14 @@
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
 <button id="deleteListButton">🗑️ Xóa Danh Sách Email</button>
 
+<p id="count"></p>
+<!-- Nút Reset & Xoá đặt ngay dưới số email còn lại -->
+<button id="resetLogsButton">Reset & Xoá</button>
+
 <div class="input-container">
   <input type="text" id="emailOutput" placeholder="Email sẽ xuất hiện ở đây" readonly>
   <button id="manualCopyButton">📋</button>
 </div>
-
-<p id="count"></p>
-<p id="output"></p>
-
-<!-- Nút reset log copy nhỏ, nằm trên nút copy -->
-<button id="resetLogsButton">🧹 Reset & Xóa Log Copy</button>
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
@@ -341,96 +339,4 @@ document.getElementById('copyButton').addEventListener('click', () => {
       const logEntry = { email, time: now, deviceId };
       copyLogs.push(logEntry);
       copyLogsRef.set(copyLogs).catch(() => {
-        showToast('⚠️ Lỗi khi ghi log copy.', true);
-      });
-
-      // Kiểm tra trùng lặp sau khi copy
-      startDuplicateCheck();
-
-    }
-    copyButton.disabled = false;
-    copyButton.textContent = "📋 Lấy & Copy Email";
-  });
-});
-
-// Duplicate checking variables
-let duplicateCheckTimeout = null;
-let checkingDuplicates = false;
-
-function startDuplicateCheck() {
-  if (checkingDuplicates) return; // tránh chạy đồng thời
-
-  checkingDuplicates = true;
-  // Đợi 15s nếu không có copy mới thì bắt đầu check 10s
-  let lastCopyTime = Date.now();
-
-  function resetTimeout() {
-    lastCopyTime = Date.now();
-    if (duplicateCheckTimeout) clearTimeout(duplicateCheckTimeout);
-    duplicateCheckTimeout = setTimeout(() => {
-      checkDuplicatesFor10s();
-    }, 15000);
-  }
-
-  resetTimeout();
-
-  // Lắng nghe log copy mới cập nhật
-  copyLogsRef.on('value', snapshot => {
-    const logs = snapshot.val() || [];
-    copyLogs = logs;
-    resetTimeout();
-  });
-
-  function checkDuplicatesFor10s() {
-    let startTime = Date.now();
-    const interval = setInterval(() => {
-      const now = Date.now();
-      if (now - startTime >= 10000) {
-        clearInterval(interval);
-        checkingDuplicates = false;
-        return;
-      }
-      checkDuplicates();
-    }, 2000);
-  }
-}
-
-function checkDuplicates() {
-  // Lấy ra email copy trùng
-  const countMap = {};
-  copyLogs.forEach(log => {
-    if (!countMap[log.email]) countMap[log.email] = new Set();
-    countMap[log.email].add(log.deviceId);
-  });
-
-  const duplicates = [];
-  Object.entries(countMap).forEach(([email, deviceSet]) => {
-    if (deviceSet.size > 1) {
-      duplicates.push({ email, count: deviceSet.size });
-    }
-  });
-
-  if (duplicates.length > 0) {
-    let msg = '⚠️ Phát hiện trùng email copy:\n';
-    duplicates.forEach(d => {
-      msg += `- ${d.email} copy bởi ${d.count} thiết bị\n`;
-    });
-    showToast(msg, false, false, true, 10000);
-  }
-}
-
-// Nút reset log copy
-const resetLogsButton = document.getElementById('resetLogsButton');
-resetLogsButton.addEventListener('click', () => {
-  if (!confirm('Bạn có chắc muốn reset và xóa toàn bộ log copy trên Firebase?')) return;
-  copyLogsRef.set(null).then(() => {
-    copyLogs = [];
-    showToast('✅ Đã reset và xóa toàn bộ log copy.', false, true);
-  }).catch(() => {
-    showToast('⚠️ Lỗi khi reset log copy.', true);
-  });
-});
-
-</script>
-</body>
-</html>
+        show
