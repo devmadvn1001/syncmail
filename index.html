@@ -149,7 +149,7 @@ button:hover {
 <div id="toastContainer"></div>
 
 <script>
-// Firebase Config
+// === Firebase Config ===
 const firebaseConfig = {
   apiKey: "AIzaSyDK3Y3P-bz4jM2p_5kVqid-P7Q80sRHkfE",
   authDomain: "email-sync-tool-96986.firebaseapp.com",
@@ -166,7 +166,6 @@ const emailRef = db.ref('emails');
 
 let emailList = [];
 
-// Tách email chuẩn
 function extractEmails(text) {
   const separators = /[\s,;|]+/;
   const parts = text.split(separators);
@@ -189,9 +188,11 @@ function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
       showToast(`✅ Đã copy: ${text}`);
-      enableDarkMode(); // 👉 bật darkmode
+      triggerDelayedDarkMode();
     }).catch(() => fallbackCopy(text));
-  } else fallbackCopy(text);
+  } else {
+    fallbackCopy(text);
+  }
 }
 
 function fallbackCopy(text) {
@@ -204,9 +205,9 @@ function fallbackCopy(text) {
   textarea.select();
   try {
     const successful = document.execCommand('copy');
-    if(successful) {
+    if (successful) {
       showToast(`✅ Đã copy: ${text}`);
-      enableDarkMode(); // 👉 bật darkmode
+      triggerDelayedDarkMode();
     } else {
       showToast('⚠️ Không thể copy.', true);
     }
@@ -238,28 +239,32 @@ function showToast(message = "✅ Email đã được Copy !!!", isError = false
   }, 5000);
 }
 
-// Bật darkmode + lưu local
-function enableDarkMode() {
-  if (!document.body.classList.contains('dark')) {
-    document.body.classList.add('dark');
-    localStorage.setItem('darkMode', 'true');
-  }
+// Bật dark mode sau 10 giây nếu chưa bật
+function triggerDelayedDarkMode() {
+  if (document.body.classList.contains('dark')) return;
+
+  setTimeout(() => {
+    if (!document.body.classList.contains('dark')) {
+      document.body.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    }
+  }, 10000);
 }
 
-// Load darkmode nếu đã lưu
+// Tải dark mode nếu đã lưu
 (function () {
   const isDark = localStorage.getItem('darkMode') === 'true';
   if (isDark) document.body.classList.add('dark');
 })();
 
-// Load danh sách mail realtime
+// Load danh sách email
 emailRef.on('value', snapshot => {
   const data = snapshot.val();
   emailList = data ? data : [];
   updateCount();
 });
 
-// Thêm danh sách mail
+// Thêm email
 document.getElementById('addListButton').addEventListener('click', () => {
   const input = document.getElementById('emailListInput').value.trim();
   const filteredEmails = extractEmails(input);
@@ -276,15 +281,12 @@ document.getElementById('addListButton').addEventListener('click', () => {
     });
     return updatedList;
   }, (error, committed, snapshot) => {
-    if (error) {
+    if (error || !committed) {
       showToast('⚠️ Lỗi khi thêm email.', true);
-    } else if (!committed) {
-      showToast('⚠️ Không thể thêm email.', true);
     } else {
-      const updatedList = snapshot.val() ? snapshot.val() : [];
-      showToast(`✅ Đã thêm ${filteredEmails.length} email hợp lệ, tổng: ${updatedList.length}.`);
+      emailList = snapshot.val() || [];
+      showToast(`✅ Đã thêm ${filteredEmails.length} email hợp lệ.`);
       document.getElementById('emailListInput').value = '';
-      emailList = updatedList;
       updateCount();
     }
   });
@@ -293,7 +295,7 @@ document.getElementById('addListButton').addEventListener('click', () => {
 // Xóa danh sách
 document.getElementById('deleteListButton').addEventListener('click', () => {
   if (!confirm("Bạn có chắc muốn xóa toàn bộ danh sách email?")) return;
-  emailRef.set([], (error) => {
+  emailRef.set([], error => {
     if (error) {
       showToast('⚠️ Lỗi khi xóa danh sách.', true);
     } else {
@@ -315,7 +317,7 @@ document.getElementById('manualCopyButton').addEventListener('click', () => {
   copyText(email);
 });
 
-// Lấy & Copy + xóa
+// Lấy & Copy Email
 document.getElementById('copyButton').addEventListener('click', () => {
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
