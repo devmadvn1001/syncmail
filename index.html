@@ -287,7 +287,7 @@
       await lockRef.set(true); // Khóa các máy khác
       setTimeout(() => {
         lockRef.set(false); // Mở sau 0.2 giây
-      }, 200);
+      }, 100);
     } catch (e) {
       showToast("⚠️ Lỗi khi tạo khóa copy.", true);
     }
