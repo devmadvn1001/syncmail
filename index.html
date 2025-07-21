@@ -102,25 +102,6 @@
       from { opacity: 0; transform: translateY(-30px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    /* 🔥 Dark Mode Tạm thời */
-    body.dark-mode {
-      background: #121212;
-      color: #f0f0f0;
-    }
-    body.dark-mode textarea,
-    body.dark-mode input {
-      background: #1e1e1e;
-      color: #f0f0f0;
-      border: 1px solid #555;
-    }
-    body.dark-mode button {
-      background: #333;
-      color: #f0f0f0;
-    }
-    body.dark-mode button:hover {
-      background: #555;
-    }
   </style>
 </head>
 <body>
@@ -147,7 +128,8 @@
 <div id="toastContainer"></div>
 
 <script>
- const firebaseConfig = {
+// Your web app's Firebase configuration
+const firebaseConfig = {
   apiKey: "AIzaSyBIM03NvXqLagUrat91gyQHadSFN9-M4-w",
   authDomain: "sync-mail-tool-cbd23.firebaseapp.com",
   databaseURL: "https://sync-mail-tool-cbd23-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -156,7 +138,6 @@
   messagingSenderId: "872589917482",
   appId: "1:872589917482:web:a7682e1453f8ab2e81f253"
 };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const emailRef = db.ref('emails');
@@ -174,13 +155,13 @@
   }
 
   function updateCount() {
-    document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
+    document.getElementById('count').textContent = 📊 Số email còn lại: ${emailList.length};
   }
 
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        showToast(`✅ Đã copy: ${text}`);
+        showToast(✅ Đã copy: ${text});
       }).catch(() => fallbackCopy(text));
     } else {
       fallbackCopy(text);
@@ -197,7 +178,7 @@
     textarea.select();
     try {
       const successful = document.execCommand('copy');
-      showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful);
+      showToast(successful ? ✅ Đã copy: ${text} : '⚠️ Không thể copy.', !successful);
     } catch {
       showToast('⚠️ Lỗi khi copy.', true);
     }
@@ -218,13 +199,6 @@
       if (toast.parentNode) container.removeChild(toast);
       if (currentToast === toast) currentToast = null;
     }, 5000);
-  }
-
-  function enableDarkModeTemporarily() {
-    document.body.classList.add('dark-mode');
-    setTimeout(() => {
-      document.body.classList.remove('dark-mode');
-    }, 10000);
   }
 
   emailRef.on('value', snapshot => {
@@ -251,7 +225,7 @@
         showToast('⚠️ Lỗi khi thêm email.', true);
       } else {
         const updatedList = snapshot.val() || [];
-        showToast(`✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.`);
+        showToast(✅ Đã thêm ${filtered.length} email, tổng: ${updatedList.length}.);
         document.getElementById('emailListInput').value = '';
         emailList = updatedList;
         updateCount();
@@ -296,7 +270,6 @@
     const randomIndex = Math.floor(Math.random() * emailList.length);
     const email = emailList[randomIndex];
     copyText(email);
-    enableDarkModeTemporarily();
     emailRef.transaction(list => {
       if (!list) return null;
       const idx = list.indexOf(email);
