@@ -140,17 +140,16 @@
 <div id="toastContainer"></div>
 
 <script>
-  
 const firebaseConfig = {
   apiKey: "AIzaSyAdejqCksTTv5Nj7M1ZVOLzjX_tZdb_MMk",
   authDomain: "sync-mail-tool-1da43.firebaseapp.com",
   databaseURL: "https://sync-mail-tool-1da43-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "sync-mail-tool-1da43",
-  storageBucket: "sync-mail-tool-1da43.firebasestorage.app",
+  storageBucket: "sync-mail-tool-1da43.appspot.com", // ✅ sửa đúng tên
   messagingSenderId: "595630346441",
   appId: "1:595630346441:web:b3cd7c83156e07141f7d18"
 };
-  
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
