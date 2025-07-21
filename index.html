@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -135,7 +133,7 @@
     authDomain: "sync-email-tool.firebaseapp.com",
     databaseURL: "https://sync-email-tool-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "sync-email-tool",
-    storageBucket: "sync-email-tool.firebasestorage.app",
+    storageBucket: "sync-email-tool.appspot.com",
     messagingSenderId: "670973267733",
     appId: "1:670973267733:web:7355698f12bab41eda231c"
   };
@@ -258,35 +256,31 @@
     copyText(email);
   });
 
+  // ✅ Sửa lại logic copy FIFO: lấy email đầu tiên
   document.getElementById('copyButton').addEventListener('click', () => {
     const btn = document.getElementById('copyButton');
     btn.disabled = true;
     btn.textContent = "⏳ Đang xử lý...";
-    if (emailList.length === 0) {
-      showToast('⚠️ Danh sách đã hết email.', true);
-      btn.disabled = false;
-      btn.textContent = "📋 Lấy & Copy Email";
-      document.getElementById('emailOutput').value = '';
-      return;
-    }
-    const randomIndex = Math.floor(Math.random() * emailList.length);
-    const email = emailList[randomIndex];
-    copyText(email);
+
     emailRef.transaction(list => {
-      if (!list) return null;
-      const idx = list.indexOf(email);
-      if (idx !== -1) list.splice(idx, 1);
+      if (!Array.isArray(list) || list.length === 0) return list;
+      const email = list[0]; // FIFO: lấy phần tử đầu
+      list.shift();          // xóa email đầu
+      selectedEmail = email;
       return list;
     }, (error, committed, snapshot) => {
       btn.disabled = false;
       btn.textContent = "📋 Lấy & Copy Email";
-      if (committed) {
-        document.getElementById('emailOutput').value = email;
-        emailList = snapshot.val() || [];
-        updateCount();
-      } else if (error) {
-        showToast("⚠️ Lỗi khi xóa email.", true);
+
+      if (error || !committed || !selectedEmail) {
+        showToast("⚠️ Không thể lấy email.", true);
+        return;
       }
+
+      document.getElementById('emailOutput').value = selectedEmail;
+      copyText(selectedEmail);
+      emailList = snapshot.val() || [];
+      updateCount();
     });
   });
 </script>
