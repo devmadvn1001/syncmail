@@ -69,7 +69,7 @@
     /* 🔔 TOAST STYLE */
     #customToast {
       position: fixed;
-      top: -120px;
+      top: -100px;
       left: 0;
       width: 100%;
       background-color: #343a40;
@@ -84,10 +84,6 @@
     }
     #customToast.show {
       top: 0;
-    }
-    #customToast span {
-      display: block;
-      line-height: 1.5;
     }
 
     /* 🌙 Dark mode */
@@ -110,12 +106,12 @@
 <body>
 
 <!-- 🔔 TOAST -->
-<div id="customToast">
-  <span>📨 Quản lý danh sách Email Online</span>
-  <span>(Tự Lọc & Lưu)</span>
-</div>
+<div id="customToast">✅ Đã copy thành công!</div>
 
-<h3>📨 Quản lý danh sách Email Online (Tự Lọc & Lưu)</h3>
+<h3 style="text-align: center; line-height: 1.4;">
+  📨 Quản lý danh sách Email Online<br>
+  (Tự Lọc & Lưu)
+</h3>
 
 <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ; , space ...)"></textarea>
 <button id="addListButton">➕ Thêm Email Vào Danh Sách</button>
@@ -132,15 +128,15 @@
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
 <script>
- const firebaseConfig = {
-  apiKey: "AIzaSyCWgaqjvmSetE-lVVxLDdzLj5x3lXMbEAU",
-  authDomain: "sync-mail-tool-11b23.firebaseapp.com",
-  databaseURL: "https://sync-mail-tool-11b23-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sync-mail-tool-11b23",
-  storageBucket: "sync-mail-tool-11b23.firebasestorage.app",
-  messagingSenderId: "681653464599",
-  appId: "1:681653464599:web:bb9fbf8e9ed837d275f652"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWgaqjvmSetE-lVVxLDdzLj5x3lXMbEAU",
+    authDomain: "sync-mail-tool-11b23.firebaseapp.com",
+    databaseURL: "https://sync-mail-tool-11b23-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sync-mail-tool-11b23",
+    storageBucket: "sync-mail-tool-11b23.appspot.com",
+    messagingSenderId: "681653464599",
+    appId: "1:681653464599:web:bb9fbf8e9ed837d275f652"
+  };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const emailRef = db.ref('emails');
@@ -164,8 +160,9 @@
     document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
   }
 
-  function showToast() {
+  function showToast(msg) {
     const toast = document.getElementById('customToast');
+    toast.textContent = msg;
     toast.classList.add('show');
     document.body.classList.add('dark-mode');
     setTimeout(() => {
@@ -178,7 +175,7 @@
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
         document.getElementById('output').textContent = `✅ Đã copy: ${text}`;
-        showToast();
+        showToast(`✅ Đã copy: ${text}`);
       }).catch(() => fallbackCopy(text));
     } else fallbackCopy(text);
   }
@@ -194,7 +191,7 @@
     try {
       const successful = document.execCommand('copy');
       document.getElementById('output').textContent = successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.';
-      if (successful) showToast();
+      if (successful) showToast(`✅ Đã copy: ${text}`);
     } catch {
       document.getElementById('output').textContent = '⚠️ Lỗi khi copy.';
     }
