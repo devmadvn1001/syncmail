@@ -14,6 +14,7 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
+      transition: background 0.5s, color 0.5s;
     }
     textarea, input, button {
       font-size: 16px;
@@ -88,6 +89,22 @@
       display: block;
       line-height: 1.5;
     }
+
+    /* 🌙 Dark mode */
+    .dark-mode {
+      background: #121212;
+      color: white;
+    }
+    .dark-mode textarea,
+    .dark-mode input,
+    .dark-mode button {
+      background: #1e1e1e;
+      color: white;
+      border: 1px solid #444;
+    }
+    .dark-mode button:hover {
+      background: #333;
+    }
   </style>
 </head>
 <body>
@@ -115,7 +132,7 @@
 <button id="copyButton">📋 Lấy & Copy Email</button>
 
 <script>
-  const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyCWgaqjvmSetE-lVVxLDdzLj5x3lXMbEAU",
   authDomain: "sync-mail-tool-11b23.firebaseapp.com",
   databaseURL: "https://sync-mail-tool-11b23-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -150,9 +167,11 @@
   function showToast() {
     const toast = document.getElementById('customToast');
     toast.classList.add('show');
+    document.body.classList.add('dark-mode');
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 3000);
+      document.body.classList.remove('dark-mode');
+    }, 10000);
   }
 
   function copyText(text) {
