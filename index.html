@@ -277,6 +277,8 @@
     }
 
     let countdown = 5;
+    const randomIndex = Math.floor(Math.random() * emailList.length);
+    const selectedEmail = emailList[randomIndex];
     copyButton.textContent = `⏳ Đang xử lý... (${countdown})`;
 
     const countdownInterval = setInterval(() => {
@@ -286,14 +288,11 @@
       } else {
         clearInterval(countdownInterval);
 
-        const randomIndex = Math.floor(Math.random() * emailList.length);
-        const email = emailList[randomIndex];
-
-        copyText(email);
+        copyText(selectedEmail);
 
         emailRef.transaction(currentList => {
           if (!currentList) return null;
-          const idx = currentList.indexOf(email);
+          const idx = currentList.indexOf(selectedEmail);
           if (idx !== -1) {
             currentList.splice(idx, 1);
           }
@@ -302,7 +301,7 @@
           if (error) {
             showToast('⚠️ Lỗi khi xóa email.', true);
           } else if (committed) {
-            document.getElementById('emailOutput').value = email;
+            document.getElementById('emailOutput').value = selectedEmail;
             emailList = snapshot.val() || [];
             updateCount();
           }
