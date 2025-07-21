@@ -170,8 +170,6 @@
     if (isError) toast.classList.add('error');
     else if (isSuccess) toast.classList.add('success');
 
-    void toast.offsetWidth;
-
     if (isSuccess) {
       document.body.classList.add('dark-mode');
       setTimeout(() => {
@@ -185,21 +183,28 @@
   }
 
   function copyText(text) {
-    const tempTextarea = document.createElement("textarea");
-    tempTextarea.value = text;
-    tempTextarea.style.position = "fixed";
-    tempTextarea.style.top = "-1000px";
-    document.body.appendChild(tempTextarea);
-    tempTextarea.focus();
-    tempTextarea.select();
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`✅ Đã copy: ${text}`, false, true);
+      }).catch(() => fallbackCopy(text));
+    } else fallbackCopy(text);
+  }
 
+  function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
     try {
-      const successful = document.execCommand("copy");
+      const successful = document.execCommand('copy');
       showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
-    } catch (err) {
+    } catch {
       showToast('⚠️ Lỗi khi copy.', true);
     }
-    document.body.removeChild(tempTextarea);
+    document.body.removeChild(textarea);
   }
 
   emailRef.on('value', snapshot => {
@@ -261,48 +266,54 @@
   document.getElementById('copyButton').addEventListener('click', () => {
     const copyButton = document.getElementById('copyButton');
     copyButton.disabled = true;
+    copyButton.textContent = "⏳ Đang xử lý...";
 
-    if (emailList.length === 0) {
-      showToast('⚠️ Danh sách đã hết email.', true);
-      copyButton.disabled = false;
-      copyButton.textContent = "📋 Lấy & Copy Email";
-      return;
-    }
+    const timestampRef = db.ref('lastCopyTimestamp');
+    const now = Date.now();
 
-    let countdown = 5;
-    const randomIndex = Math.floor(Math.random() * emailList.length);
-    const selectedEmail = emailList[randomIndex];
-    copyButton.textContent = `⏳ Đang xử lý... (${countdown})`;
-
-    const countdownInterval = setInterval(() => {
-      countdown--;
-      if (countdown > 0) {
-        copyButton.textContent = `⏳ Đang xử lý... (${countdown})`;
-      } else {
-        clearInterval(countdownInterval);
-
-        copyText(selectedEmail);
-
-        emailRef.transaction(currentList => {
-          if (!currentList) return null;
-          const idx = currentList.indexOf(selectedEmail);
-          if (idx !== -1) {
-            currentList.splice(idx, 1);
-          }
-          return currentList;
-        }, (error, committed, snapshot) => {
-          if (error) {
-            showToast('⚠️ Lỗi khi xóa email.', true);
-          } else if (committed) {
-            document.getElementById('emailOutput').value = selectedEmail;
-            emailList = snapshot.val() || [];
-            updateCount();
-          }
-          copyButton.disabled = false;
-          copyButton.textContent = "📋 Lấy & Copy Email";
-        });
+    timestampRef.transaction(lastTime => {
+      if (!lastTime || now - lastTime >= 200) {
+        return now;
       }
-    }, 1000);
+      return;
+    }, (error, committed) => {
+      if (error || !committed) {
+        showToast('⚠️ Đang có thao tác trùng lặp, vui lòng thử lại sau!', true);
+        copyButton.disabled = false;
+        copyButton.textContent = "📋 Lấy & Copy Email";
+        return;
+      }
+
+      if (emailList.length === 0) {
+        showToast('⚠️ Danh sách đã hết email.', true);
+        copyButton.disabled = false;
+        copyButton.textContent = "📋 Lấy & Copy Email";
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * emailList.length);
+      const email = emailList[randomIndex];
+      copyText(email);
+
+      emailRef.transaction(currentList => {
+        if (!currentList) return null;
+        const idx = currentList.indexOf(email);
+        if (idx !== -1) {
+          currentList.splice(idx, 1);
+        }
+        return currentList;
+      }, (error, committed, snapshot) => {
+        if (error) {
+          showToast('⚠️ Lỗi khi xóa email.', true);
+        } else if (committed) {
+          document.getElementById('emailOutput').value = email;
+          emailList = snapshot.val() || [];
+          updateCount();
+        }
+        copyButton.disabled = false;
+        copyButton.textContent = "📋 Lấy & Copy Email";
+      });
+    });
   });
 </script>
 </body>
