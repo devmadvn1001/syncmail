@@ -19,6 +19,9 @@
     body.warning-mode {
       background: #fff3cd !important;
     }
+    body.duplicate-mode {
+      background: #f8d7da !important;
+    }
     textarea, input, button {
       font-size: 16px;
       width: 90%;
@@ -62,13 +65,12 @@
       padding: 18px;
       width: 95%;
       max-width: 380px;
-      margin-top: 30px;
+      margin-top: 10px; /* Đưa nút này gần nút Clear Log */
       background: #28a745;
     }
     #copyButton:hover {
       background: #1c7c31;
     }
-
     #clearLogsButton {
       background: #ffc107;
       color: black;
@@ -76,7 +78,6 @@
     #clearLogsButton:hover {
       background: #e0a800;
     }
-
     #customToast {
       position: fixed;
       top: -100px;
@@ -105,7 +106,6 @@
       background-color: #f9c851;
       color: black;
     }
-
     .dark-mode {
       background: #121212;
       color: white;
@@ -141,9 +141,9 @@
 
 <p id="count"></p>
 <button id="clearLogsButton">🧹 Clear Log Copy</button>
-<p id="output"></p>
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
+<p id="output"></p>
 
 <script>
 const firebaseConfig = {
@@ -199,9 +199,6 @@ function showToast(msg, isError = false, isSuccess = false, isWarning = false, d
   if (isSuccess) {
     document.body.classList.add('dark-mode');
     setTimeout(() => document.body.classList.remove('dark-mode'), duration);
-  } else if (isWarning) {
-    document.body.classList.add('warning-mode');
-    setTimeout(() => document.body.classList.remove('warning-mode'), duration);
   }
 
   setTimeout(() => {
@@ -299,7 +296,6 @@ function onCopyEmail(email) {
   const logKey = now + '_' + deviceId;
   copyLogsRef.child(logKey).set({ email, time: now, deviceId });
 
-  // Kiểm tra nếu email này đã từng được copy bởi thiết bị khác trong 15s gần nhất
   copyLogsRef.orderByChild('time').startAt(now - 15000).once('value').then(snapshot => {
     const logs = snapshot.val() || {};
     let trùng = false;
@@ -311,17 +307,17 @@ function onCopyEmail(email) {
       }
     }
     if (trùng) {
-      showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, false, false, true, 20000);
+      document.body.classList.add('duplicate-mode'); // giữ màu đỏ vĩnh viễn
+      showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, true);
     }
   });
 
   if (checkDupTimeout) clearTimeout(checkDupTimeout);
-  checkDupTimeout = setTimeout(() => {
-    // bạn vẫn có thể giữ hàm checkDuplicateEmails() nếu muốn dùng
-  }, 15000);
+  checkDupTimeout = setTimeout(() => {}, 15000);
 }
 
 document.getElementById('copyButton').addEventListener('click', () => {
+  document.body.classList.remove('duplicate-mode'); // reset màu đỏ
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
   copyButton.textContent = "⏳ Đang xử lý...";
