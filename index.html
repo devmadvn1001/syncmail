@@ -87,6 +87,9 @@
     #customToast.error {
       background-color: #d93025;
     }
+    #customToast.success {
+      background-color: #28a745;
+    }
 
     .dark-mode {
       background: #121212;
@@ -159,13 +162,18 @@
     document.getElementById('count').textContent = `📊 Số email còn lại: ${emailList.length}`;
   }
 
-  function showToast(msg, isError = false) {
+  function showToast(msg, isError = false, isSuccess = false) {
     const toast = document.getElementById('customToast');
     toast.textContent = msg;
+    toast.className = ''; // reset class
     toast.classList.add('show');
-    toast.classList.toggle('error', isError);
+    if (isError) toast.classList.add('error');
+    else if (isSuccess) toast.classList.add('success');
 
-    if (!isError) {
+    // Force reflow to restart animation
+    void toast.offsetWidth;
+
+    if (isSuccess) {
       document.body.classList.add('dark-mode');
       setTimeout(() => {
         document.body.classList.remove('dark-mode');
@@ -174,14 +182,13 @@
 
     setTimeout(() => {
       toast.classList.remove('show');
-      toast.classList.remove('error');
     }, 10000);
   }
 
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        showToast(`✅ Đã copy: ${text}`);
+        showToast(`✅ Đã copy: ${text}`, false, true);
       }).catch(() => fallbackCopy(text));
     } else fallbackCopy(text);
   }
@@ -196,7 +203,7 @@
     textarea.select();
     try {
       const successful = document.execCommand('copy');
-      showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful);
+      showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
     } catch {
       showToast('⚠️ Lỗi khi copy.', true);
     }
