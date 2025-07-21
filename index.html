@@ -272,7 +272,7 @@
     const now = Date.now();
 
     timestampRef.transaction(lastTime => {
-      if (!lastTime || now - lastTime >= 200) {
+      if (!lastTime || now - lastTime >= 100) { // chỉ cho thao tác nếu cách nhau >= 0.1s
         return now;
       }
       return;
