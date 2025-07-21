@@ -69,6 +69,14 @@
       background: #1c7c31;
     }
 
+    #clearLogsButton {
+      background: #ffc107;
+      color: black;
+    }
+    #clearLogsButton:hover {
+      background: #e0a800;
+    }
+
     #customToast {
       position: fixed;
       top: -100px;
@@ -132,6 +140,7 @@
 </div>
 
 <p id="count"></p>
+<button id="clearLogsButton">🧹 Clear Log Copy</button>
 <p id="output"></p>
 
 <button id="copyButton">📋 Lấy & Copy Email</button>
@@ -150,7 +159,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const emailRef = db.ref('emails');
 const lastCopiedRef = db.ref('lastCopied');
-const copyLogsRef = db.ref('copyLogs'); // log thao tác copy
+const copyLogsRef = db.ref('copyLogs');
 
 let emailList = [];
 let deviceId = localStorage.getItem('deviceId');
@@ -285,18 +294,14 @@ let lastCopyTimestamp = 0;
 let checkDupTimeout = null;
 let isCheckingDup = false;
 
-// Hàm kiểm tra trùng lặp email trong log
 function checkDuplicateEmails() {
-  if (isCheckingDup) return; // tránh chạy trùng
+  if (isCheckingDup) return;
   isCheckingDup = true;
-  const checkDuration = 10000; // 10 giây kiểm tra trùng
+  const checkDuration = 10000;
   const now = Date.now();
   copyLogsRef.orderByChild('time').startAt(now - 15000).once('value').then(snapshot => {
     const logs = snapshot.val() || {};
-    // Chuyển logs thành mảng để xử lý
     const arrLogs = Object.values(logs);
-
-    // Tạo map email -> danh sách thiết bị đã copy
     const emailDeviceMap = {};
     arrLogs.forEach(log => {
       if (!emailDeviceMap[log.email]) {
@@ -305,11 +310,8 @@ function checkDuplicateEmails() {
       emailDeviceMap[log.email].add(log.deviceId);
     });
 
-    // Kiểm tra nếu có email nào được copy bởi 2 thiết bị khác nhau
-    let duplicateFound = false;
     for (const [email, devices] of Object.entries(emailDeviceMap)) {
       if (devices.size > 1) {
-        duplicateFound = true;
         showToast(`⚠️ Email "${email}" bị lấy trùng trên nhiều thiết bị!`, false, false, true, 20000);
         break;
       }
@@ -321,22 +323,15 @@ function checkDuplicateEmails() {
   });
 }
 
-// Khi copy xong, lưu log và reset bộ đếm 15s
 function onCopyEmail(email) {
   const now = Date.now();
   lastCopyTimestamp = now;
-
-  // Ghi log copy vào Firebase (mỗi log có key timestamp + deviceId để tránh trùng)
   const logKey = now + '_' + deviceId;
   copyLogsRef.child(logKey).set({ email, time: now, deviceId });
 
-  // Hủy timeout kiểm tra cũ nếu có
   if (checkDupTimeout) clearTimeout(checkDupTimeout);
-
-  // Thiết lập timeout kiểm tra trùng sau 15s không copy mới
   checkDupTimeout = setTimeout(() => {
     checkDuplicateEmails();
-    // Sau 10s kiểm tra, có thể lặp lại nếu cần (ở đây không tự động lặp)
   }, 15000);
 }
 
@@ -374,12 +369,21 @@ document.getElementById('copyButton').addEventListener('click', () => {
       const now = Date.now();
       lastCopiedRef.set({ email, time: now, deviceId });
 
-      // ** Gọi hàm ghi log và reset bộ đếm **
       onCopyEmail(email);
-
     }
     copyButton.disabled = false;
     copyButton.textContent = "📋 Lấy & Copy Email";
+  });
+});
+
+document.getElementById('clearLogsButton').addEventListener('click', () => {
+  if (!confirm("Bạn có chắc muốn xóa toàn bộ log copy?")) return;
+  copyLogsRef.set(null, (error) => {
+    if (error) {
+      showToast('⚠️ Lỗi khi xóa log copy.', true);
+    } else {
+      showToast('✅ Đã xóa toàn bộ log copy.', false, true);
+    }
   });
 });
 </script>
