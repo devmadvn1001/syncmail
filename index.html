@@ -177,15 +177,18 @@
     }, 5000);
   }
 
-  function copyText(text) {
+  function copyText(text, callback) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
         showToast(`✅ Đã copy: ${text}`, false, true);
-      }).catch(() => fallbackCopy(text));
-    } else fallbackCopy(text);
+        callback(true);
+      }).catch(() => {
+        fallbackCopy(text, callback);
+      });
+    } else fallbackCopy(text, callback);
   }
 
-  function fallbackCopy(text) {
+  function fallbackCopy(text, callback) {
     const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.style.position = "fixed";
@@ -196,8 +199,10 @@
     try {
       const successful = document.execCommand('copy');
       showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
+      callback(successful);
     } catch {
       showToast('⚠️ Lỗi khi copy.', true);
+      callback(false);
     }
     document.body.removeChild(textarea);
   }
@@ -255,7 +260,7 @@
       showToast('⚠️ Không có email để copy.', true);
       return;
     }
-    copyText(email);
+    copyText(email, () => {});
   });
 
   document.getElementById('copyButton').addEventListener('click', () => {
@@ -263,27 +268,37 @@
     copyButton.disabled = true;
     copyButton.textContent = "⏳ Đang xử lý...";
 
-    let selectedEmail = null;
-
     emailRef.transaction(currentList => {
       if (!currentList || currentList.length === 0) return null;
       const randomIndex = Math.floor(Math.random() * currentList.length);
-      selectedEmail = currentList[randomIndex];
+      const selectedEmail = currentList[randomIndex];
       currentList.splice(randomIndex, 1);
       return currentList;
     }, (error, committed, snapshot) => {
       copyButton.disabled = false;
       copyButton.textContent = "📋 Lấy & Copy Email";
 
-      if (error || !committed || !selectedEmail) {
+      if (error || !committed || !snapshot) {
         showToast('⚠️ Không còn email để copy.', true);
         return;
       }
 
-      document.getElementById('emailOutput').value = selectedEmail;
-      emailList = snapshot.val() || [];
+      const oldList = snapshot.val();
+      const usedEmail = emailList.find(e => !oldList.includes(e));
+
+      if (!usedEmail) {
+        showToast('⚠️ Không tìm thấy email mới.', true);
+        return;
+      }
+
+      document.getElementById('emailOutput').value = usedEmail;
+      emailList = oldList || [];
       updateCount();
-      copyText(selectedEmail);
+      copyText(usedEmail, success => {
+        if (!success) {
+          showToast('⚠️ Không thể copy.', true);
+        }
+      });
     });
   });
 </script>
