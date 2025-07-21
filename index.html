@@ -185,28 +185,21 @@
   }
 
   function copyText(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast(`✅ Đã copy: ${text}`, false, true);
-      }).catch(() => fallbackCopy(text));
-    } else fallbackCopy(text);
-  }
+    const tempTextarea = document.createElement("textarea");
+    tempTextarea.value = text;
+    tempTextarea.style.position = "fixed";
+    tempTextarea.style.top = "-1000px";
+    document.body.appendChild(tempTextarea);
+    tempTextarea.focus();
+    tempTextarea.select();
 
-  function fallbackCopy(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.left = "-9999px";
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
     try {
-      const successful = document.execCommand('copy');
+      const successful = document.execCommand("copy");
       showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
-    } catch {
+    } catch (err) {
       showToast('⚠️ Lỗi khi copy.', true);
     }
-    document.body.removeChild(textarea);
+    document.body.removeChild(tempTextarea);
   }
 
   emailRef.on('value', snapshot => {
