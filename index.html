@@ -21,11 +21,11 @@
       background: #fff3cd !important;
     }
     body.duplicate-mode {
-      background: #8b0000 !important;
-      color: black !important;
+      background: #d93025 !important; /* đỏ toàn phông khi email bị lấy bởi thiết bị khác */
+      color: white !important;
     }
     body.success-mode {
-      background: #3cc398 !important; /* xanh lá custom */
+      background: #3cc398 !important; /* xanh custom khi copy thành công */
       color: white !important;
     }
     textarea, input, button {
@@ -106,7 +106,7 @@
       background-color: #d93025;
     }
     #customToast.success {
-      background-color: #3cc398; /* xanh lá custom */
+      background-color: #3cc398; /* xanh custom */
     }
     #customToast.warning {
       background-color: #f9c851;
@@ -220,10 +220,15 @@ function hideToast() {
   isDuplicateToast = false;
 }
 
+function resetBody() {
+  document.body.classList.remove('success-mode', 'duplicate-mode', 'warning-mode');
+}
+
 function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
       showToast(`✅ Đã copy: ${text}`, false, true);
+      resetBody();
       document.body.classList.add('success-mode'); // xanh custom khi copy thành công
     }).catch(() => fallbackCopy(text));
   } else fallbackCopy(text);
@@ -241,7 +246,8 @@ function fallbackCopy(text) {
     const successful = document.execCommand('copy');
     showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
     if (successful) {
-      document.body.classList.add('success-mode'); // xanh custom khi copy thành công
+      resetBody();
+      document.body.classList.add('success-mode');
     }
   } catch {
     showToast('⚠️ Lỗi khi copy.', true);
@@ -321,14 +327,15 @@ function onCopyEmail(email) {
       }
     }
     if (trùng) {
-      document.body.classList.add('duplicate-mode');
+      resetBody();
+      document.body.classList.add('duplicate-mode'); // đỏ toàn phông
       showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, true, false, false, 0, true);
     }
   });
 }
 
 document.getElementById('copyButton').addEventListener('click', () => {
-  document.body.classList.remove('duplicate-mode');
+  resetBody();
   hideToast();
   const copyButton = document.getElementById('copyButton');
   copyButton.disabled = true;
@@ -372,6 +379,7 @@ document.getElementById('clearLogsButton').addEventListener('click', () => {
     if (error) {
       showToast('⚠️ Lỗi khi xóa log copy.', true);
     } else {
+      resetBody();
       showToast('✅ Đã xóa toàn bộ log copy.', false, true);
     }
   });
