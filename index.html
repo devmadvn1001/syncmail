@@ -25,7 +25,7 @@
       color: black !important;
     }
     body.success-mode {
-      background: #28a745 !important; /* xanh lá */
+      background: #3cc398 !important; /* xanh lá custom */
       color: white !important;
     }
     textarea, input, button {
@@ -106,7 +106,7 @@
       background-color: #d93025;
     }
     #customToast.success {
-      background-color: #28a745;
+      background-color: #3cc398; /* xanh lá custom */
     }
     #customToast.warning {
       background-color: #f9c851;
@@ -224,7 +224,7 @@ function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
       showToast(`✅ Đã copy: ${text}`, false, true);
-      document.body.classList.add('success-mode'); // xanh lá khi copy thành công
+      document.body.classList.add('success-mode'); // xanh custom khi copy thành công
     }).catch(() => fallbackCopy(text));
   } else fallbackCopy(text);
 }
@@ -241,7 +241,7 @@ function fallbackCopy(text) {
     const successful = document.execCommand('copy');
     showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
     if (successful) {
-      document.body.classList.add('success-mode'); // xanh lá khi copy thành công
+      document.body.classList.add('success-mode'); // xanh custom khi copy thành công
     }
   } catch {
     showToast('⚠️ Lỗi khi copy.', true);
