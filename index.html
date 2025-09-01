@@ -21,11 +21,11 @@
       background: #fff3cd !important;
     }
     body.duplicate-mode {
-      background: #d93025 !important;
+      background: #d93025 !important; /* đỏ toàn phông khi email bị lấy bởi thiết bị khác */
       color: white !important;
     }
     body.success-mode {
-      background: #3cc398 !important;
+      background: #3cc398 !important; /* xanh custom khi copy thành công */
       color: white !important;
     }
     textarea, input, button {
@@ -80,11 +80,10 @@
     #clearLogsButton {
       background: #ffc107;
       color: black;
-      font-size: 20px;
-      padding: 18px;
-      width: 95%;
-      max-width: 380px; /* giống copy button */
+      width: 95%; /* chiều ngang bằng copyButton */
+      max-width: 380px;
       margin-top: 10px;
+      padding: 12px; /* vẫn giữ nguyên chiều cao */
     }
     #clearLogsButton:hover {
       background: #e0a800;
@@ -111,7 +110,7 @@
       background-color: #d93025;
     }
     #customToast.success {
-      background-color: #28a745; /* xanh lá cho tất cả toast thành công */
+      background-color: #28a745; /* xanh lá cho copy, thêm, clearlog, xoá email */
     }
     #customToast.warning {
       background-color: #f9c851;
@@ -211,7 +210,7 @@ function showToast(msg, isError = false, isSuccess = false, isWarning = false, d
 
   if (persistent) {
     isDuplicateToast = true;
-    return;
+    return; // không ẩn tự động
   }
 
   setTimeout(() => {
@@ -234,7 +233,7 @@ function copyText(text) {
     navigator.clipboard.writeText(text).then(() => {
       showToast(`✅ Đã copy: ${text}`, false, true);
       resetBody();
-      document.body.classList.add('success-mode');
+      document.body.classList.add('success-mode'); // xanh khi copy thành công
     }).catch(() => fallbackCopy(text));
   } else fallbackCopy(text);
 }
@@ -333,7 +332,7 @@ function onCopyEmail(email) {
     }
     if (trùng) {
       resetBody();
-      document.body.classList.add('duplicate-mode');
+      document.body.classList.add('duplicate-mode'); // đỏ toàn phông
       showToast(`⚠️ Email "${email}" đã bị lấy trước đó bởi thiết bị khác!`, true, false, false, 0, true);
     }
   });
