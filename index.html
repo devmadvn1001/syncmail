@@ -231,9 +231,8 @@ function resetBody() {
 function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
-      showToast(`✅ Đã copy: ${text}`, false, true);
-      resetBody();
-      document.body.classList.add('success-mode'); // xanh khi copy thành công
+      // ✅ Chỉ hiển thị toast copy, không đổi màu nền ở đây
+      showToast(`📋 Đang copy: ${text}`);
     }).catch(() => fallbackCopy(text));
   } else fallbackCopy(text);
 }
@@ -248,11 +247,7 @@ function fallbackCopy(text) {
   textarea.select();
   try {
     const successful = document.execCommand('copy');
-    showToast(successful ? `✅ Đã copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
-    if (successful) {
-      resetBody();
-      document.body.classList.add('success-mode');
-    }
+    showToast(successful ? `📋 Đang copy: ${text}` : '⚠️ Không thể copy.', !successful, successful);
   } catch {
     showToast('⚠️ Lỗi khi copy.', true);
   }
@@ -371,6 +366,12 @@ document.getElementById('copyButton').addEventListener('click', () => {
       emailList = snapshot.val() || [];
       updateCount();
       lastCopiedRef.set({ email, time: Date.now(), deviceId });
+
+      // ✅ Chỉ khi transaction commit thành công mới đổi nền xanh
+      resetBody();
+      document.body.classList.add('success-mode');
+      showToast(`✅ Đã lấy & copy: ${email}`, false, true);
+
       onCopyEmail(email);
     }
     copyButton.disabled = false;
